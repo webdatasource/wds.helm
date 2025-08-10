@@ -1,0 +1,65 @@
+suite: test playground service
+templates:
+  - auxiliary-palyground-service.yaml
+
+tests:
+  - it: should not render when disabled
+    set:
+      global.auxiliaryServices.playground.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render with defaults
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: spec.ports[0].name
+          value: http
+      - equal:
+          path: spec.ports[0].port
+          value: 80
+      - equal:
+          path: spec.ports[0].targetPort
+          value: http
+      - equal:
+          path: spec.selector.app
+          value: playground
+      - equal:
+          path: metadata.labels.app
+          value: playground
+
+  - it: should merge global and service serviceExtraLabels
+    set:
+      global.serviceExtraLabels:
+        globalLabel: g
+        common: global
+      auxiliaryServices.playground.serviceExtraLabelsOverride:
+        serviceLabel: s
+        common: service
+    asserts:
+      - equal:
+          path: metadata.labels.globalLabel
+          value: g
+      - equal:
+          path: metadata.labels.serviceLabel
+          value: s
+      - equal:
+          path: metadata.labels.common
+          value: service
+
+  - it: should include shared chart labels and selector labels
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: wds-helm-chart
+      - equal:
+          path: metadata.labels["app.kubernetes.io/instance"]
+          value: RELEASE-NAME
+      - equal:
+          path: spec.selector["app.kubernetes.io/name"]
+          value: wds-helm-chart
+      - equal:
+          path: spec.selector["app.kubernetes.io/instance"]
+          value: RELEASE-NAME

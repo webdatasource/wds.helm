@@ -1,22 +1,14 @@
 {{- if .Values.global.auxiliaryServices.playground.enabled }}
-apiVersion: v1
-kind: Service
-metadata:
-  name: playground
-  labels:
-    app: playground
-    {{- include "wds-helm-chart.labels" . | nindent 4 }}
-    {{- with .Values.auxiliaryServices.playground.serviceExtraLabelsOverride | default .Values.global.serviceExtraLabels }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-  type: LoadBalancer
-  ports:
-    - name: http
-      port: 80
-      targetPort: 8080
-      protocol: TCP
-  selector:
-    app: playground
-    {{- include "wds-helm-chart.selectorLabels" . | nindent 4 }}
+{{- $labels := (merge (default (dict) .Values.auxiliaryServices.playground.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels)) }}
+{{- $ports := list (dict "name" "http" "port" 80 "protocol" "TCP") }}
+{{- $selector := (include "wds-helm-chart.selectorLabels" . | fromYaml) }}
+
+{{ include "wds-helm-chart.service" (dict 
+  "ctx" . 
+  "name" "playground" 
+  "labels" $labels 
+  "type" "LoadBalancer"
+  "ports" $ports
+  "selector" $selector
+) }}
 {{- end }}

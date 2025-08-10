@@ -1,74 +1,30 @@
 {{- if eq .Values.global.coreServices.mode "MultiService" }}
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: crawler
-  labels:
-    app: crawler
-    {{- include "wds-helm-chart.labels" . | nindent 4 }}
-    {{- with .Values.coreServices.crawler.deploymentExtraLabelsOverride | default .Values.global.deploymentExtraLabels }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-  replicas: {{ .Values.coreServices.crawler.replicaCount | default 1 }}
-  selector:
-    matchLabels:
-      app: crawler
-      {{- include "wds-helm-chart.selectorLabels" . | nindent 6 }}
-  template:
-    metadata:
-      labels:
-        app: crawler
-        {{- include "wds-helm-chart.selectorLabels" . | nindent 8 }}
-    spec:
-      containers:
-        - name: crawler
-          image: "{{ .Values.global.registry }}/webdatasource/crawler:{{ .Values.coreServices.crawler.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.coreServices.crawler.image.pullPolicy | default "IfNotPresent" }}
-          environment:
-            - name: DATAKEEPER_ORIGIN
-              value: "dns://datakeeper.svc"
-            - name: SERVICE_HOST
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP           
-            - name: EXTERNAL_IP_ADDRESS_CONFIGS
-              value: "{{ .Values.global.coreServices.exteralIpConfigs | join "," }}"
-            - name: MAX_INACTIVE_SEC_TO_REREGISTRAR
-              value: "{{ .Values.global.coreServices.maxInactiveSecToReregistrar }}"
-            - name: LICENSE_KEY
-              value: "{{ .Values.global.coreServices.licenseKey }}"
-            - name: MIN_LOG_LEVEL
-              value: "{{ .Values.global.minLogLevel }}"
-          ports:
-            - name: grpc
-              containerPort: 8082
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8081
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: 8081
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          {{- with .Values.coreServices.crawler.resourcesOverride | default .Values.global.resources }}
-          resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-      {{- with .Values.coreServices.crawler.nodeSelectorOverride | default .Values.global.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.coreServices.crawler.tolerationsOverride | default .Values.global.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.coreServices.crawler.affinityOverride | default .Values.global.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+{{- $labels := (merge (default (dict) .Values.coreServices.crawler.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels)) }}
+{{- $ports := list (dict "name" "grpc-web" "containerPort" 8082) }}
+{{- $env := list
+  (dict "name" "DATAKEEPER_ORIGIN" "value" "http://datakeeper-rm")
+  (dict "name" "SERVICE_HOST" "valueFrom" (dict "fieldRef" (dict "fieldPath" "status.podIP")))
+  (dict "name" "EXTERNAL_IP_ADDRESS_CONFIGS" "value" (join "," .Values.global.coreServices.externalIpConfigs))
+  (dict "name" "LICENSE_KEY" "value" .Values.global.coreServices.license.key)
+  (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
+}}
+{{- if .Values.global.coreServices.maxInactiveSecToReregistrar }}
+  {{- $env = append $env (dict "name" "MAX_INACTIVE_SEC_TO_REREGISTRAR" "value" .Values.global.coreServices.maxInactiveSecToReregistrar) }}
+{{- end }}
+
+{{ include "wds-helm-chart.deployment" (dict 
+  "ctx" . 
+  "name" "crawler" 
+  "labels" $labels 
+  "registry" .Values.global.registry
+  "image" "webdatasource/crawler"
+  "tag" (.Values.coreServices.crawler.image.tag | default .Chart.AppVersion)
+  "imagePullPolicy" (.Values.coreServices.crawler.image.pullPolicy)
+  "replicas" (.Values.coreServices.crawler.replicaCount | default 2)
+  "env" $env
+  "ports" $ports
+  "nodeSelector" (.Values.coreServices.crawler.nodeSelectorOverride | default .Values.global.nodeSelector)
+  "tolerations" (.Values.coreServices.crawler.tolerationsOverride | default .Values.global.tolerations)
+  "affinity" (.Values.coreServices.crawler.affinityOverride | default .Values.global.affinity)
+) }}
 {{- end }}

@@ -1,59 +1,21 @@
 {{- if .Values.global.auxiliaryServices.playground.enabled }}
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: playground
-  labels:
-    app: playground
-    {{- include "wds-helm-chart.labels" . | nindent 4 }}
-    {{- with .Values.auxiliaryServices.playground.deploymentExtraLabelsOverride | default .Values.global.deploymentExtraLabels }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-  replicas: {{ .Values.auxiliaryServices.playground.replicaCount | default 1 }}
-  selector:
-    matchLabels:
-      app: playground
-      {{- include "wds-helm-chart.selectorLabels" . | nindent 6 }}
-  template:
-    metadata:
-      labels:
-        app: playground
-        {{- include "wds-helm-chart.selectorLabels" . | nindent 8 }}
-    spec:
-      containers:
-        - name: playground
-          image: "{{ .Values.global.registry }}/webdatasource/playground:{{ .Values.auxiliaryServices.playground.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.auxiliaryServices.playground.image.pullPolicy | default "IfNotPresent" }}
-          ports:
-            - name: http
-              containerPort: 8081
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8081
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: 8081
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          {{- with .Values.auxiliaryServices.playground.resourcesOverride | default .Values.global.resources }}
-          resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-      nodeSelector:
-        {{- with .Values.auxiliaryServices.playground.nodeSelectorOverride | default .Values.global.nodeSelector }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
-      tolerations:
-        {{- with .Values.auxiliaryServices.playground.tolerationsOverride | default .Values.global.tolerations }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
-      affinity:
-        {{- with .Values.auxiliaryServices.playground.affinityOverride | default .Values.global.affinity }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+{{- $labels := (merge (default (dict) .Values.auxiliaryServices.playground.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels)) }}
+{{- $env := list }}
+{{- $ports := list (dict "name" "http" "containerPort" 8080) }}
+
+{{ include "wds-helm-chart.deployment" (dict 
+  "ctx" . 
+  "name" "playground" 
+  "labels" $labels 
+  "registry" .Values.global.registry
+  "image" "webdatasource/playground"
+  "tag" (.Values.auxiliaryServices.playground.image.tag | default .Chart.AppVersion)
+  "imagePullPolicy" (.Values.auxiliaryServices.playground.image.pullPolicy)
+  "replicas" (.Values.auxiliaryServices.playground.replicaCount | default 1)
+  "env" $env
+  "ports" $ports
+  "nodeSelector" (.Values.auxiliaryServices.playground.nodeSelectorOverride | default .Values.global.nodeSelector)
+  "tolerations" (.Values.auxiliaryServices.playground.tolerationsOverride | default .Values.global.tolerations)
+  "affinity" (.Values.auxiliaryServices.playground.affinityOverride | default .Values.global.affinity)
+) }}
 {{- end }}

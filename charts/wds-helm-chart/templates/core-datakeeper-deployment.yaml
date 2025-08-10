@@ -1,71 +1,29 @@
 {{- if eq .Values.global.coreServices.mode "MultiService" }}
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: datakeeper
-  labels:
-    {{- include "wds-helm-chart.labels" . | nindent 4 }}
-    {{- with .Values.coreServices.datakeeper.deploymentExtraLabelsOverride | default .Values.global.deploymentExtraLabels }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-  replicas: {{ .Values.coreServices.datakeeper.replicaCount | default 1 }}
-  selector:
-    matchLabels:
-      app: datakeeper
-      {{- include "wds-helm-chart.selectorLabels" . | nindent 6 }}
-  template:
-    metadata:
-      labels:
-        app: datakeeper
-        {{- include "wds-helm-chart.selectorLabels" . | nindent 8 }}
-    spec:
-      containers:
-        - name: datakeeper
-          image: "{{ .Values.global.registry }}/webdatasource/datakeeper:{{ .Values.coreServices.datakeeper.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.coreServices.datakeeper.image.pullPolicy | default "IfNotPresent" }}
-          environment:
-            - name: IDEALER_ORIGIN
-              value: "dns://idealer.svc"
-            - name: DB_CONNECTION_STRING
-              value: "{{ .Values.global.coreServices.database.mongodb.connectionString }}"
-            - name: CACHE_CONNECTION_STRING
-              value: "{{ .Values.global.coreServices.database.cache.connectionString }}"
-            - name: LICENSE_KEY
-              value: "{{ .Values.global.coreServices.licenseKey }}"
-            - name: MIN_LOG_LEVEL
-              value: "{{ .Values.global.minLogLevel }}"
-          ports:
-            - name: grpc-dk
-              containerPort: 8082
-            - name: grpc-rm
-              containerPort: 8083
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8081
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: 8081
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          resources:
-            {{- with .Values.coreServices.datakeeper.resourcesOverride | default .Values.global.resources }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
-      nodeSelector:
-        {{- with .Values.coreServices.datakeeper.nodeSelectorOverride | default .Values.global.nodeSelector }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
-      tolerations:
-        {{- with .Values.coreServices.datakeeper.tolerationsOverride | default .Values.global.tolerations }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
-      affinity:
-        {{- with .Values.coreServices.datakeeper.affinityOverride | default .Values.global.affinity }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+{{- $labels := (merge (default (dict) .Values.coreServices.datakeeper.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels)) }}
+{{- $ports := list (dict "name" "grpc-web-dk" "containerPort" 8082) (dict "name" "grpc-web-rm" "containerPort" 8083) }}
+{{- $env := list
+  (dict "name" "IDEALER_ORIGIN" "value" "http://idealer")
+  (dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString)
+  (dict "name" "LICENSE_KEY" "value" .Values.global.coreServices.license.key)
+  (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
+}}
+{{- if .Values.global.coreServices.cache.connectionString }}
+  {{- $env = append $env (dict "name" "CACHE_CONNECTION_STRING" "value" .Values.global.coreServices.cache.connectionString) }}
+{{- end }}
+
+{{ include "wds-helm-chart.deployment" (dict 
+  "ctx" . 
+  "name" "datakeeper" 
+  "labels" $labels 
+  "registry" .Values.global.registry
+  "image" "webdatasource/datakeeper"
+  "tag" (.Values.coreServices.datakeeper.image.tag | default .Chart.AppVersion)
+  "imagePullPolicy" (.Values.coreServices.datakeeper.image.pullPolicy)
+  "replicas" (.Values.coreServices.datakeeper.replicaCount | default 2)
+  "env" $env
+  "ports" $ports
+  "nodeSelector" (.Values.coreServices.datakeeper.nodeSelectorOverride | default .Values.global.nodeSelector)
+  "tolerations" (.Values.coreServices.datakeeper.tolerationsOverride | default .Values.global.tolerations)
+  "affinity" (.Values.coreServices.datakeeper.affinityOverride | default .Values.global.affinity)
+) }}
 {{- end }}

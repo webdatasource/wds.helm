@@ -1,22 +1,13 @@
 {{- if .Values.global.auxiliaryServices.docs.enabled }}
-apiVersion: v1
-kind: Service
-metadata:
-  name: docs
-  labels:
-    app: docs
-    {{- include "wds-helm-chart.labels" . | nindent 4 }}
-  {{- with .Values.auxiliaryServices.docs.serviceExtraLabelsOverride | default .Values.global.serviceExtraLabels }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-  type: LoadBalancer
-  ports:
-    - name: http
-      port: 80
-      targetPort: 8080
-      protocol: TCP
-  selector:
-    app: docs
-    {{- include "wds-helm-chart.selectorLabels" . | nindent 4 }}
+{{- $labels := (merge (default (dict) .Values.auxiliaryServices.docs.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels)) }}
+{{- $ports := list (dict "name" "http" "port" 80 "protocol" "TCP") }}
+{{- $selector := (include "wds-helm-chart.selectorLabels" . | fromYaml) }}
+
+{{ include "wds-helm-chart.service" (dict 
+  "ctx" . 
+  "name" "docs" 
+  "labels" $labels 
+  "ports" $ports
+  "selector" $selector
+) }}
 {{- end }}

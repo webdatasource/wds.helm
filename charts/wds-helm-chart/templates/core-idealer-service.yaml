@@ -1,22 +1,14 @@
 {{- if eq .Values.global.coreServices.mode "MultiService" }}
-apiVersion: v1
-kind: Service
-metadata:
-  name: idealer
-  labels:
-    app: idealer
-    {{- include "wds-helm-chart.labels" . | nindent 4 }}
-    {{- with .Values.coreServices.idealer.serviceExtraLabelsOverride | default .Values.global.serviceExtraLabels }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-  type: LoadBalancer
-  ports:
-    - name: grpc-web
-      port: 8082
-      targetPort: 8082
-      protocol: TCP
-  selector:
-    app: idealer
-    {{- include "wds-helm-chart.selectorLabels" . | nindent 4 }}
+{{- $labels := (merge (default (dict) .Values.coreServices.idealer.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels)) }}
+{{- $ports := list (dict "name" "grpc-web" "port" 8082 "protocol" "TCP") }}
+{{- $selector := (include "wds-helm-chart.selectorLabels" . | fromYaml) }}
+
+{{ include "wds-helm-chart.service" (dict 
+  "ctx" . 
+  "name" "idealer" 
+  "labels" $labels 
+  "type" "LoadBalancer"
+  "ports" $ports
+  "selector" $selector
+) }}
 {{- end }}

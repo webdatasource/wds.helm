@@ -1,22 +1,14 @@
 {{- if eq .Values.global.coreServices.mode "SingleService" }}
-apiVersion: v1
-kind: Service
-metadata:
-  name: solidstack
-  labels:
-    app: solidstack
-    {{- include "wds-helm-chart.labels" . | nindent 4 }}
-    {{- with .Values.coreServices.solidstack.serviceExtraLabelsOverride | default .Values.global.serviceExtraLabels }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-  type: LoadBalancer
-  ports:
-    - name: http
-      port: 80
-      targetPort: 8080
-      protocol: TCP
-  selector:
-    app: solidstack
-    {{- include "wds-helm-chart.selectorLabels" . | nindent 4 }}
+{{- $labels := (merge (default (dict) .Values.coreServices.solidstack.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels)) }}
+{{- $ports := list (dict "name" "http" "port" 80 "protocol" "TCP") }}
+{{- $selector := (include "wds-helm-chart.selectorLabels" . | fromYaml) }}
+
+{{ include "wds-helm-chart.service" (dict 
+  "ctx" . 
+  "name" "solidstack" 
+  "labels" $labels 
+  "type" "LoadBalancer"
+  "ports" $ports
+  "selector" $selector
+) }}
 {{- end }}

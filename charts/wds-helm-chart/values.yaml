@@ -24,17 +24,19 @@ global:
     # MultiService: all core services are deployed (dapi, datakeeper, crawler, scraper, idealer) together with their services
     mode: SingleService
     # License key to run application in the MultiService mode
-    licenseKey: ""
+    license: {
+      key: ""
+    }
+    # Cache configuration (is used only in MultiService mode)
+    cache:
+      # Cache connection string. If not set, the MongoDB will be used as a cache
+      connectionString: ""
     # Database configuration
     databases:
       # MongoDB
       mongodb:
-        # MongoDB connection string. REQUIRED!
+        # MongoDB connection string
         connectionString: ""
-    # Cache configuration
-    cache:
-      # Cache connection string. If not set, the MongoDB will be used as a cache
-      connectionString: ""
     # Available job types
     jobTypes: 
     - intranet # Crawl data from intranet sources with no limits
@@ -58,10 +60,18 @@ global:
   minLogLevel: "Information"
   # Ingress configuration
   ingress:
-    # Whether to enable ingress
+    # Whether to add ingress
     enabled: false
-    # Host address for ingress. Required if ingress.enabled is true
-    host: ""
+    # If the ingressClassName is omitted, a default Ingress class should be defined
+    className: "nginx"
+    # Ingress annotations to add
+    annotations: {}
+    # Base path for all services. Must ends with '/'. For instance, if is set to '/wds/', all services will be available under these paths:
+    # - API: http://your-domain/wds/api
+    # - MCP: http://your-domain/wds/mcp
+    # - Docs: http://your-domain/wds/docs
+    # - Playground: http://your-domain/wds/playground
+    basePath: "/"
 coreServices:
   solidstack:
     # Number of pod replicas
@@ -210,7 +220,7 @@ auxiliaryServices:
     image:
       # Image pull policy (default: IfNotPresent)
       pullPolicy: ""
-      # Image tag (default: latest)
+      # Image tag (default: .Chart.AppVersion)
       tag: ""
     # Override global.resources for this service
     resourcesOverride: {}

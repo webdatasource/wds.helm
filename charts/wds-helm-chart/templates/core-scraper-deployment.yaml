@@ -1,59 +1,24 @@
 {{- if eq .Values.global.coreServices.mode "MultiService" }}
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: scraper
-  labels:
-    app: scraper
-    {{- include "wds-helm-chart.labels" . | nindent 4 }}
-    {{- with .Values.coreServices.scraper.deploymentExtraLabelsOverride | default .Values.global.deploymentExtraLabels }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-  replicas: {{ .Values.coreServices.scraper.replicaCount | default 1 }}
-  selector:
-    matchLabels:
-      app: scraper
-      {{- include "wds-helm-chart.selectorLabels" . | nindent 6 }}
-  template:
-    metadata:
-      labels:
-        app: scraper
-        {{- include "wds-helm-chart.selectorLabels" . | nindent 8 }}
-    spec:
-      containers:
-        - name: scraper
-          image: "{{ .Values.global.registry }}/webdatasource/scraper:{{ .Values.coreServices.scraper.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.coreServices.scraper.image.pullPolicy | default "IfNotPresent" }}
-          ports:
-            - name: grpc
-              containerPort: 8082
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8081
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: 8081
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          resources:
-            {{- with .Values.coreServices.scraper.resourcesOverride | default .Values.global.resources }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
-      nodeSelector:
-        {{- with .Values.coreServices.scraper.nodeSelectorOverride | default .Values.global.nodeSelector }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
-      tolerations:
-        {{- with .Values.coreServices.scraper.tolerationsOverride | default .Values.global.tolerations }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
-      affinity:
-        {{- with .Values.coreServices.scraper.affinityOverride | default .Values.global.affinity }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+{{- $labels := (merge (default (dict) .Values.coreServices.scraper.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels)) }}
+{{- $ports := list (dict "name" "grpc-web" "containerPort" 8082) }}
+{{- $env := list
+  (dict "name" "LICENSE_KEY" "value" .Values.global.coreServices.license.key)
+  (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
+}}
+
+{{ include "wds-helm-chart.deployment" (dict 
+  "ctx" . 
+  "name" "scraper" 
+  "labels" $labels 
+  "registry" .Values.global.registry
+  "image" "webdatasource/scraper"
+  "tag" (.Values.coreServices.scraper.image.tag | default .Chart.AppVersion)
+  "imagePullPolicy" (.Values.coreServices.scraper.image.pullPolicy)
+  "replicas" (.Values.coreServices.scraper.replicaCount | default 2)
+  "env" $env
+  "ports" $ports
+  "nodeSelector" (.Values.coreServices.scraper.nodeSelectorOverride | default .Values.global.nodeSelector)
+  "tolerations" (.Values.coreServices.scraper.tolerationsOverride | default .Values.global.tolerations)
+  "affinity" (.Values.coreServices.scraper.affinityOverride | default .Values.global.affinity)
+) }}
 {{- end }}

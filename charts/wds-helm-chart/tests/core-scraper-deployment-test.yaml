@@ -1,0 +1,242 @@
+suite: test core scraper deployment
+templates:
+  - core-scraper-deployment.yaml
+
+tests:
+  - it: should not render when mode != MultiService
+    set:
+      global.coreServices.mode: SingleService
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render when mode = MultiService
+    set:
+      global.coreServices.mode: MultiService
+    asserts:
+      - isKind:
+          of: Deployment
+
+  - it: should render with defaults
+    set:
+      global.coreServices.mode: MultiService
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.replicas
+          value: 2
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: docker.io/webdatasource/scraper:v2.0.0
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: IfNotPresent
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].name
+          value: grpc-web
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 8082
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /health
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: 8080
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /ready
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: 8080
+      - equal:
+          path: spec.template.spec.containers[0].env[0].name
+          value: LICENSE_KEY
+      - equal:
+          path: spec.template.spec.containers[0].env[1].name
+          value: MIN_LOG_LEVEL
+      - equal:
+          path: spec.template.spec.containers[0].env[1].value
+          value: Information
+      - notExists:
+          path: spec.template.spec.nodeSelector
+      - notExists:
+          path: spec.template.spec.tolerations
+      - notExists:
+          path: spec.template.spec.affinity
+
+  - it: should use Chart.AppVersion as default tag when not set
+    set:
+      global.coreServices.mode: MultiService
+      global.registry: r
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: r/webdatasource/scraper:v2.0.0
+
+  - it: should set image correctly
+    set:
+      global.coreServices.mode: MultiService
+      global.registry: test.registry
+      coreServices.scraper.image.tag: latest
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: test.registry/webdatasource/scraper:latest
+
+  - it: should respect image.pullPolicy override
+    set:
+      global.coreServices.mode: MultiService
+      coreServices.scraper.image.pullPolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+
+  - it: should respect replicaCount override
+    set:
+      global.coreServices.mode: MultiService
+      coreServices.scraper.replicaCount: 3
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3
+
+  - it: should merge global and service deploymentExtraLabels
+    set:
+      global.coreServices.mode: MultiService
+      global.deploymentExtraLabels:
+        globalLabel: g
+        common: global
+      coreServices.scraper.deploymentExtraLabelsOverride:
+        serviceLabel: s
+        common: service
+    asserts:
+      - equal:
+          path: metadata.labels.globalLabel
+          value: g
+      - equal:
+          path: metadata.labels.serviceLabel
+          value: s
+      - equal:
+          path: metadata.labels.common
+          value: service
+
+  - it: should apply global nodeSelector
+    set:
+      global.coreServices.mode: MultiService
+      global.nodeSelector:
+        disktype: ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector.disktype
+          value: ssd
+
+  - it: should allow nodeSelector override per service
+    set:
+      global.coreServices.mode: MultiService
+      global.nodeSelector:
+        disktype: ssd
+      coreServices.scraper.nodeSelectorOverride:
+        disktype: hdd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector.disktype
+          value: hdd
+
+  - it: should apply global tolerations
+    set:
+      global.coreServices.mode: MultiService
+      global.tolerations:
+        - key: dedicated
+          operator: Equal
+          value: scraper
+          effect: NoSchedule
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations[0].key
+          value: dedicated
+      - equal:
+          path: spec.template.spec.tolerations[0].operator
+          value: Equal
+      - equal:
+          path: spec.template.spec.tolerations[0].value
+          value: scraper
+      - equal:
+          path: spec.template.spec.tolerations[0].effect
+          value: NoSchedule
+
+  - it: should allow tolerations override per service
+    set:
+      global.coreServices.mode: MultiService
+      global.tolerations:
+        - key: dedicated
+          operator: Equal
+          value: scraper
+          effect: NoSchedule
+      coreServices.scraper.tolerationsOverride:
+        - key: special
+          operator: Exists
+          effect: NoExecute
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations[0].key
+          value: special
+      - equal:
+          path: spec.template.spec.tolerations[0].operator
+          value: Exists
+      - equal:
+          path: spec.template.spec.tolerations[0].effect
+          value: NoExecute
+
+  - it: should apply global affinity
+    set:
+      global.coreServices.mode: MultiService
+      global.affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: disktype
+                    operator: In
+                    values:
+                      - ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: disktype
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].values[0]
+          value: ssd
+
+  - it: should allow affinity override per service
+    set:
+      global.coreServices.mode: MultiService
+      global.affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: disktype
+                    operator: In
+                    values:
+                      - ssd
+      coreServices.scraper.affinityOverride:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - scraper
+                topologyKey: kubernetes.io/hostname
+    asserts:
+      - notExists:
+          path: spec.template.spec.affinity.nodeAffinity
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
+          value: 100

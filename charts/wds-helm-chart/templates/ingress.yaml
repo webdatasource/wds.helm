@@ -1,0 +1,38 @@
+{{- if .Values.global.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webdatasource
+  labels:
+    {{- include "wds-helm-chart.labels" . | nindent 4 }}
+spec:
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          {{- if .Values.auxiliaryServices.palyground.enabled }}
+          - path: /playground
+            pathType: Prefix
+            backend:
+              service:
+                name: palyground
+                port:
+                  name: http
+          {{- end }}
+          {{- if .Values.auxiliaryServices.docs.enabled }}
+          - path: /docs
+            pathType: Prefix
+            backend:
+              service:
+                name: docs
+                port:
+                  name: http
+          {{- end }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ if eq .Values.global.coreServices.mode "SingleService" }}solidstack{{ else }}dapi{{ end }}
+                port:
+                  name: http
+{{- end }}

@@ -1,0 +1,74 @@
+{{- if eq .Values.global.coreServices.mode "MultiService" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crawler
+  labels:
+    app: crawler
+    {{- include "wds-helm-chart.labels" . | nindent 4 }}
+    {{- with .Values.coreServices.crawler.deploymentExtraLabelsOverride | default .Values.global.deploymentExtraLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.coreServices.crawler.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      app: crawler
+      {{- include "wds-helm-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: crawler
+        {{- include "wds-helm-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: crawler
+          image: "{{ .Values.global.registry }}/webdatasource/crawler:{{ .Values.coreServices.crawler.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.coreServices.crawler.image.pullPolicy | default "IfNotPresent" }}
+          environment:
+            - name: DATAKEEPER_ORIGIN
+              value: "dns://datakeeper.svc"
+            - name: SERVICE_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP           
+            - name: EXTERNAL_IP_ADDRESS_CONFIGS
+              value: "{{ .Values.global.coreServices.exteralIpConfigs | join "," }}"
+            - name: MAX_INACTIVE_SEC_TO_REREGISTRAR
+              value: "{{ .Values.global.coreServices.maxInactiveSecToReregistrar }}"
+            - name: LICENSE_KEY
+              value: "{{ .Values.global.coreServices.licenseKey }}"
+            - name: MIN_LOG_LEVEL
+              value: "{{ .Values.global.minLogLevel }}"
+          ports:
+            - name: grpc
+              containerPort: 8082
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          {{- with .Values.coreServices.crawler.resourcesOverride | default .Values.global.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.coreServices.crawler.nodeSelectorOverride | default .Values.global.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.coreServices.crawler.tolerationsOverride | default .Values.global.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.coreServices.crawler.affinityOverride | default .Values.global.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

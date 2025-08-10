@@ -1,0 +1,76 @@
+{{- if eq .Values.global.coreServices.mode "MultiService" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dapi
+  labels:
+    app: dapi
+    {{- include "wds-helm-chart.labels" . | nindent 4 }}
+    {{- with .Values.coreServices.dapi.deploymentExtraLabelsOverride | default .Values.global.deploymentExtraLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.coreServices.dapi.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      app: dapi
+      {{- include "wds-helm-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: dapi
+        {{- include "wds-helm-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: dapi
+          image: "{{ .Values.global.registry }}/webdatasource/dapi:{{ .Values.coreServices.dapi.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.coreServices.dapi.image.pullPolicy | default "IfNotPresent" }}
+          environment:
+            - name: DATAKEEPER_ORIGIN
+              value: "dns://datakeeper.svc"
+            - name: SCRAPER_ORIGIN
+              value: "dns://scraper.svc"
+            - name: IDEALER_ORIGIN
+              value: "dns://idealer.svc"
+            - name: DB_CONNECTION_STRING
+              value: "{{ .Values.global.coreServices.database.mongodb.connectionString }}"
+            - name: JOBS_TYPES
+              value: "{{ .Values.global.coreServices.jobTypes | join "," }}"
+            - name: LICENSE_KEY
+              value: "{{ .Values.global.coreServices.licenseKey }}"
+            - name: GLOBAL_EXCEPTION_RESPONSE_DELAY_MS
+              value: "{{ .Values.global.coreServices.exceptionResponseDelayMs }}"
+            - name: MIN_LOG_LEVEL
+              value: "{{ .Values.global.minLogLevel }}"
+          ports:
+            - name: http
+              containerPort: 8081
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          {{- with .Values.coreServices.dapi.resourcesOverride | default .Values.global.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      nodeSelector:
+        {{- with .Values.coreServices.dapi.nodeSelectorOverride | default .Values.global.nodeSelector }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      tolerations:
+        {{- with .Values.coreServices.dapi.tolerationsOverride | default .Values.global.tolerations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      affinity:
+        {{- with .Values.coreServices.dapi.affinityOverride | default .Values.global.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+{{- end }}

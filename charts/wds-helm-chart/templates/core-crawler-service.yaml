@@ -1,0 +1,22 @@
+{{- if eq .Values.global.coreServices.mode "MultiService" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: crawler
+  labels:
+    app: crawler
+    {{- include "wds-helm-chart.labels" . | nindent 4 }}
+    {{- with .Values.coreServices.crawler.serviceExtraLabelsOverride | default .Values.global.serviceExtraLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  type: LoadBalancer
+  ports:
+    - name: grpc-web
+      port: 8082
+      targetPort: 8082
+      protocol: TCP
+  selector:
+    app: crawler
+    {{- include "wds-helm-chart.selectorLabels" . | nindent 4 }}
+{{- end }}

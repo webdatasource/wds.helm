@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - WDS-125
 
 jobs:
   release:

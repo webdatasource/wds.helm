@@ -1,0 +1,66 @@
+{{- if eq .Values.global.coreServices.mode "MultiService" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: idealer
+  labels:
+    app: idealer
+    {{- include "wds-helm-chart.labels" . | nindent 4 }}
+    {{- with .Values.coreServices.idealer.deploymentExtraLabelsOverride | default .Values.global.deploymentExtraLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.coreServices.idealer.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      app: idealer
+      {{- include "wds-helm-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: idealer
+        {{- include "wds-helm-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: idealer
+          image: "{{ .Values.global.registry }}/webdatasource/idealer:{{ .Values.coreServices.idealer.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.coreServices.idealer.image.pullPolicy | default "IfNotPresent" }}
+          environment:
+            - name: DB_CONNECTION_STRING
+              value: "{{ .Values.global.coreServices.database.mongodb.connectionString }}"
+            - name: LICENSE_KEY
+              value: "{{ .Values.global.coreServices.licenseKey }}"
+            - name: MIN_LOG_LEVEL
+              value: "{{ .Values.global.minLogLevel }}"
+          ports:
+            - name: grpc
+              containerPort: 8082
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          {{- with .Values.coreServices.idealer.resourcesOverride | default .Values.global.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      nodeSelector:
+        {{- with .Values.coreServices.idealer.nodeSelectorOverride | default .Values.global.nodeSelector }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      tolerations:
+        {{- with .Values.coreServices.idealer.tolerationsOverride | default .Values.global.tolerations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      affinity:
+        {{- with .Values.coreServices.idealer.affinityOverride | default .Values.global.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+{{- end }}

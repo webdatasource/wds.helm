@@ -1,0 +1,226 @@
+global:
+  # Docker registry for all images
+  registry: docker.io
+  # Default resource requests and limits for all services
+  resources:
+    requests:
+      # Minimum CPU requested per pod
+      cpu: 100m        
+      # Minimum memory requested per pod
+      memory: 256Mi    
+  # Extra labels applied to all deployments (can be overridden per service)
+  deploymentExtraLabels: {}
+  # Extra labels applied to all services (can be overridden per service)
+  serviceExtraLabels: {}
+  # Default nodeSelector for all pods
+  nodeSelector: {}
+  # Default tolerations for all pods
+  tolerations: []
+  # Default affinity rules for all pods
+  affinity: {}
+  coreServices:
+    # Deployment mode. Values: "SingleService", "MultiService"
+    # SingleService: only solidstack is deployed together with its service
+    # MultiService: all core services are deployed (dapi, datakeeper, crawler, scraper, idealer) together with their services
+    mode: SingleService
+    # License key to run application in the MultiService mode
+    licenseKey: ""
+    # Database configuration
+    databases:
+      # MongoDB
+      mongodb:
+        # MongoDB connection string. REQUIRED!
+        connectionString: ""
+    # Cache configuration
+    cache:
+      # Cache connection string. If not set, the MongoDB will be used as a cache
+      connectionString: ""
+    # Available job types
+    jobTypes: 
+    - intranet # Crawl data from intranet sources with no limits
+    - internet # Crawl data from internet sources via request gateways (proxy addresses, external IP addresses, etc.)
+    # External IP configurations for crawling web resources on Internet
+    externalIpConfigs:
+    - intranet # Reserved value to allow crawling for Intranet jobs.
+    - amazon # The https://checkip.amazonaws.com is used to get a public IP address
+    # Defines how much time should be waited before responding with an HTTP error (in case of). Default value is 1 second
+    exceptionResponseDelayMs: ""
+    # Maximum inactive seconds to re-register crawler. Default value is 60 seconds
+    maxInactiveSecToReregistrar: ""
+  auxiliaryServices:
+    docs:
+      # Whether to deploy docs service
+      enabled: true
+    playground:
+      # Whether to deploy playground service
+      enabled: true
+  # Minimum log level for all services. Values: "Trace", "Debug", "Information", "Warning", "Error", "Critical"
+  minLogLevel: "Information"
+  # Ingress configuration
+  ingress:
+    # Whether to enable ingress
+    enabled: false
+    # Host address for ingress. Required if ingress.enabled is true
+    host: ""
+coreServices:
+  solidstack:
+    # Number of pod replicas
+    replicaCount: 2
+    image:
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
+      # Image tag (default: .Chart.AppVersion)
+      tag: ""
+    # Override global.resources for this service
+    resourcesOverride: {}
+    # Override global.deploymentExtraLabels 
+    deploymentExtraLabelsOverride: {}
+    # Override global.serviceExtraLabels for this service
+    serviceExtraLabelsOverride: {}
+    # Override global.nodeSelector for this service
+    nodeSelectorOverride: {}
+    # Override global.tolerations for this service
+    tolerationsOverride: []
+    # Override global.affinity for this service
+    affinityOverride: {}
+  dapi:
+    # Number of pod replicas
+    replicaCount: 2
+    image:
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
+      # Image tag (default: .Chart.AppVersion)
+      tag: ""
+    # Override global.resources for this service
+    resourcesOverride: {}
+    # Override global.deploymentExtraLabels 
+    deploymentExtraLabelsOverride: {}
+    # Override global.serviceExtraLabels for this service
+    serviceExtraLabelsOverride: {}
+    # Override global.nodeSelector for this service
+    nodeSelectorOverride: {}
+    # Override global.tolerations for this service
+    tolerationsOverride: []
+    # Override global.affinity for this service
+    affinityOverride: {}
+  datakeeper:
+    # Number of pod replicas
+    replicaCount: 2
+    image:
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
+      # Image tag (default: .Chart.AppVersion)
+      tag: ""
+    # Override global.resources for this service
+    resourcesOverride: {}
+    # Override global.deploymentExtraLabels 
+    deploymentExtraLabelsOverride: {}
+    # Override global.serviceExtraLabels for this service
+    serviceExtraLabelsOverride: {}
+    # Override global.nodeSelector for this service
+    nodeSelectorOverride: {}
+    # Override global.tolerations for this service
+    tolerationsOverride: []
+    # Override global.affinity for this service
+    affinityOverride: {}
+  crawler:
+    # Number of pod replicas
+    replicaCount: 2
+    image:
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
+      # Image tag (default: .Chart.AppVersion)
+      tag: ""
+    # Override global.resources for this service
+    resourcesOverride: {}
+    # Override global.deploymentExtraLabels 
+    deploymentExtraLabelsOverride: {}
+    # Override global.serviceExtraLabels for this service
+    serviceExtraLabelsOverride: {}
+    # Override global.nodeSelector for this service
+    nodeSelectorOverride: {}
+    # Override global.tolerations for this service
+    tolerationsOverride: []
+    # Override global.affinity for this service
+    affinityOverride: {}
+  scraper:
+    # Number of pod replicas
+    replicaCount: 2
+    image:
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
+      # Image tag (default: .Chart.AppVersion)
+      tag: ""
+    # Override global.resources for this service
+    resourcesOverride: {}
+    # Override global.deploymentExtraLabels 
+    deploymentExtraLabelsOverride: {}
+    # Override global.serviceExtraLabels for this service
+    serviceExtraLabelsOverride: {}
+    # Override global.nodeSelector for this service
+    nodeSelectorOverride: {}
+    # Override global.tolerations for this service
+    tolerationsOverride: []
+    # Override global.affinity for this service
+    affinityOverride: {}
+  idealer:
+    # Number of pod replicas
+    replicaCount: 2
+    image:
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
+      # Image tag (default: .Chart.AppVersion)
+      tag: ""
+    # Override global.resources for this service
+    resourcesOverride: {}
+    # Override global.deploymentExtraLabels 
+    deploymentExtraLabelsOverride: {}
+    # Override global.serviceExtraLabels for this service
+    serviceExtraLabelsOverride: {}
+    # Override global.nodeSelector for this service
+    nodeSelectorOverride: {}
+    # Override global.tolerations for this service
+    tolerationsOverride: []
+    # Override global.affinity for this service
+    affinityOverride: {}
+auxiliaryServices:
+  playground:
+    # Number of pod replicas
+    replicaCount: 1
+    image:
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
+      # Image tag (default: .Chart.AppVersion)
+      tag: ""
+    # Override global.resources for this service
+    resourcesOverride: {}
+    # Override global.deploymentExtraLabels 
+    deploymentExtraLabelsOverride: {}
+    # Override global.serviceExtraLabels for this service
+    serviceExtraLabelsOverride: {}
+    # Override global.nodeSelector for this service
+    nodeSelectorOverride: {}
+    # Override global.tolerations for this service
+    tolerationsOverride: []
+    # Override global.affinity for this service
+    affinityOverride: {}
+  docs:
+    # Number of pod replicas
+    replicaCount: 1
+    image:
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
+      # Image tag (default: latest)
+      tag: ""
+    # Override global.resources for this service
+    resourcesOverride: {}
+    # Override global.deploymentExtraLabels 
+    deploymentExtraLabelsOverride: {}
+    # Override global.serviceExtraLabels for this service
+    serviceExtraLabelsOverride: {}
+    # Override global.nodeSelector for this service
+    nodeSelectorOverride: {}
+    # Override global.tolerations for this service
+    tolerationsOverride: []
+    # Override global.affinity for this service
+    affinityOverride: {}

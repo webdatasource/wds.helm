@@ -1,0 +1,70 @@
+{{- if eq .Values.global.coreServices.mode "SingleService" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: solidstack
+  labels:
+    app: solidstack
+    {{- include "wds-helm-chart.labels" . | nindent 4 }}
+    {{- with .Values.coreServices.solidstack.deploymentExtraLabelsOverride | default .Values.global.deploymentExtraLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.coreServices.solidstack.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      app: solidstack
+      {{- include "wds-helm-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: solidstack
+        {{- include "wds-helm-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: solidstack
+          image: "{{ .Values.global.registry }}/webdatasource/solidstack:{{ .Values.coreServices.solidstack.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.coreServices.solidstack.image.pullPolicy | default "IfNotPresent" }}
+          environment:
+            - name: DB_CONNECTION_STRING
+              value: "{{ .Values.global.coreServices.databases.mongodb.connectionString }}"
+            - name: JOBS_TYPES
+              value: "{{ .Values.global.coreServices.jobTypes | join "," }}"
+            - name: EXTERNAL_IP_ADDRESS_CONFIGS
+              value: "{{ .Values.global.coreServices.exteralIpConfigs | join "," }}"
+            - name: GLOBAL_EXCEPTION_RESPONSE_DELAY_MS
+              value: "{{ .Values.global.coreServices.exceptionResponseDelayMs }}"
+            - name: MIN_LOG_LEVEL
+              value: "{{ .Values.global.minLogLevel }}"
+          ports:
+            - name: http
+              containerPort: 8081
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          {{- with .Values.coreServices.solidstack.resourcesOverride | default .Values.global.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      nodeSelector:
+        {{- with .Values.coreServices.solidstack.nodeSelectorOverride | default .Values.global.nodeSelector }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      tolerations:
+        {{- with .Values.coreServices.solidstack.tolerationsOverride | default .Values.global.tolerations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      affinity:
+        {{- with .Values.coreServices.solidstack.affinityOverride | default .Values.global.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+{{- end }}

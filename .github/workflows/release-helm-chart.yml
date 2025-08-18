@@ -2,9 +2,7 @@ name: Release Charts
 
 on:
   push:
-    branches:
-      - main
-      - WDS-125
+    tags: [ "v*" ]
 
 jobs:
   release:

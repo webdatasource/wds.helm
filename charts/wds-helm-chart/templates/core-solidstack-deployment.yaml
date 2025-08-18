@@ -1,0 +1,29 @@
+{{- if eq .Values.global.coreServices.mode "SingleService" }}
+{{- $labels := (merge (default (dict) .Values.coreServices.solidstack.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels)) }}
+{{- $ports := list (dict "name" "http" "containerPort" 8080) }}
+{{- $env := list
+  (dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString)
+  (dict "name" "JOB_TYPES" "value" (join "," .Values.global.coreServices.jobTypes))
+  (dict "name" "EXTERNAL_IP_ADDRESS_CONFIGS" "value" (join "," .Values.global.coreServices.externalIpConfigs))
+  (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
+}}
+{{- if .Values.global.coreServices.exceptionResponseDelayMs }}
+  {{- $env = append $env (dict "name" "GLOBAL_EXCEPTION_RESPONSE_DELAY_MS" "value" .Values.global.coreServices.exceptionResponseDelayMs) }}
+{{- end }}
+
+{{ include "wds-helm-chart.deployment" (dict 
+  "ctx" . 
+  "name" "solidstack" 
+  "labels" $labels 
+  "registry" .Values.global.registry
+  "image" "webdatasource/solidstack"
+  "tag" (.Values.coreServices.solidstack.image.tag | default .Chart.AppVersion)
+  "imagePullPolicy" (.Values.coreServices.solidstack.image.pullPolicy)
+  "replicas" (.Values.coreServices.solidstack.replicaCount | default 1)
+  "env" $env
+  "ports" $ports
+  "nodeSelector" (.Values.coreServices.solidstack.nodeSelectorOverride | default .Values.global.nodeSelector)
+  "tolerations" (.Values.coreServices.solidstack.tolerationsOverride | default .Values.global.tolerations)
+  "affinity" (.Values.coreServices.solidstack.affinityOverride | default .Values.global.affinity)
+) }}
+{{- end }}

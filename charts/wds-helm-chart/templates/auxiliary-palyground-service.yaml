@@ -1,0 +1,14 @@
+{{- if .Values.global.auxiliaryServices.playground.enabled }}
+{{- $labels := (merge (default (dict) .Values.auxiliaryServices.playground.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels)) }}
+{{- $ports := list (dict "name" "http" "port" 80 "protocol" "TCP") }}
+{{- $selector := (include "wds-helm-chart.selectorLabels" . | fromYaml) }}
+
+{{ include "wds-helm-chart.service" (dict 
+  "ctx" . 
+  "name" "playground" 
+  "labels" $labels 
+  "type" "LoadBalancer"
+  "ports" $ports
+  "selector" $selector
+) }}
+{{- end }}

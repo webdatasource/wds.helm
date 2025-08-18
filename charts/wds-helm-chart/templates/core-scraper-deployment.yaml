@@ -1,0 +1,24 @@
+{{- if eq .Values.global.coreServices.mode "MultiService" }}
+{{- $labels := (merge (default (dict) .Values.coreServices.scraper.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels)) }}
+{{- $ports := list (dict "name" "grpc-web" "containerPort" 8082) }}
+{{- $env := list
+  (dict "name" "LICENSE_KEY" "value" .Values.global.coreServices.license.key)
+  (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
+}}
+
+{{ include "wds-helm-chart.deployment" (dict 
+  "ctx" . 
+  "name" "scraper" 
+  "labels" $labels 
+  "registry" .Values.global.registry
+  "image" "webdatasource/scraper"
+  "tag" (.Values.coreServices.scraper.image.tag | default .Chart.AppVersion)
+  "imagePullPolicy" (.Values.coreServices.scraper.image.pullPolicy)
+  "replicas" (.Values.coreServices.scraper.replicaCount | default 2)
+  "env" $env
+  "ports" $ports
+  "nodeSelector" (.Values.coreServices.scraper.nodeSelectorOverride | default .Values.global.nodeSelector)
+  "tolerations" (.Values.coreServices.scraper.tolerationsOverride | default .Values.global.tolerations)
+  "affinity" (.Values.coreServices.scraper.affinityOverride | default .Values.global.affinity)
+) }}
+{{- end }}

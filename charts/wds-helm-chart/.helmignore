@@ -1,0 +1,69 @@
+# Patterns to ignore when building Helm chart packages.
+# Supports shell glob matching, relative path matching, and negation with '!'.
+# One pattern per line.
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VCS
+.git/
+.gitignore
+.bzr/
+.bzrignore
+.hg/
+.hgignore
+.svn/
+
+# IDEs / Editors
+*.swp
+*.swo
+*.bak
+*.tmp
+*.orig
+*.old
+*.iml
+.project
+.idea/
+.vscode/
+
+# Dependencies / local build output
+node_modules/
+vendor/
+dist/
+build/
+coverage/
+.tmp/
+
+# Helm-specific
+charts/*.tgz
+Chart.lock
+values.schema.json
+
+# Logs and backups
+*.log
+*~
+
+# Language-specific
+__pycache__/
+*.pyc
+.tox/
+
+# Env and secrets (do not commit real secrets; this avoids accidental packaging)
+.env
+*.env
+*.secret
+secrets.*
+*.pem
+*.crt
+*.key
+
+# CI/CD configs (not needed in chart package)
+.github/
+.gitlab-ci.yml
+.circleci/
+azure-pipelines.yml
+Jenkinsfile
+
+# Unit tests
+tests/

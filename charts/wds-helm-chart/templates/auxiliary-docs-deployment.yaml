@@ -1,0 +1,21 @@
+{{- if .Values.global.auxiliaryServices.docs.enabled }}
+{{- $labels := (merge (default (dict) .Values.auxiliaryServices.docs.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels)) }}
+{{- $env := list }}
+{{- $ports := list (dict "name" "http" "containerPort" 80) }}
+
+{{ include "wds-helm-chart.deployment" (dict 
+  "ctx" . 
+  "name" "docs" 
+  "labels" $labels 
+  "registry" .Values.global.registry
+  "image" "webdatasource/docs"
+  "tag" (.Values.auxiliaryServices.docs.image.tag | default .Chart.AppVersion)
+  "imagePullPolicy" (.Values.auxiliaryServices.docs.image.pullPolicy)
+  "replicas" (.Values.auxiliaryServices.docs.replicaCount | default 1)
+  "env" $env
+  "ports" $ports
+  "nodeSelector" (.Values.auxiliaryServices.docs.nodeSelectorOverride | default .Values.global.nodeSelector)
+  "tolerations" (.Values.auxiliaryServices.docs.tolerationsOverride | default .Values.global.tolerations)
+  "affinity" (.Values.auxiliaryServices.docs.affinityOverride | default .Values.global.affinity)
+) }}
+{{- end }}

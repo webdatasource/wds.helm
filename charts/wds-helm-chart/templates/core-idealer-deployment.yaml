@@ -1,0 +1,25 @@
+{{- if eq .Values.global.coreServices.mode "MultiService" }}
+{{- $labels := (merge (default (dict) .Values.coreServices.idealer.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels)) }}
+{{- $env := list
+  (dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString)
+  (dict "name" "LICENSE_KEY" "value" .Values.global.coreServices.license.key)
+  (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
+}}
+{{- $ports := list (dict "name" "grpc-web" "containerPort" 8082) }}
+
+{{ include "wds-helm-chart.deployment" (dict 
+  "ctx" . 
+  "name" "idealer" 
+  "labels" $labels 
+  "registry" .Values.global.registry
+  "image" "webdatasource/idealer"
+  "tag" (.Values.coreServices.idealer.image.tag | default .Chart.AppVersion)
+  "imagePullPolicy" (.Values.coreServices.idealer.image.pullPolicy)
+  "replicas" (.Values.coreServices.idealer.replicaCount | default 2)
+  "env" $env
+  "ports" $ports
+  "nodeSelector" (.Values.coreServices.idealer.nodeSelectorOverride | default .Values.global.nodeSelector)
+  "tolerations" (.Values.coreServices.idealer.tolerationsOverride | default .Values.global.tolerations)
+  "affinity" (.Values.coreServices.idealer.affinityOverride | default .Values.global.affinity)
+) }}
+{{- end }}

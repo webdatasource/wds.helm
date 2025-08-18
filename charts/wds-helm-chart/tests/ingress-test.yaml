@@ -1,0 +1,99 @@
+suite: test ingress
+templates:
+  - ingress.yaml
+
+tests:
+  - it: should not render when ingress disabled
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render defaults with basePath '/'
+    set:
+      global.ingress.enabled: true
+    asserts:
+      - isKind:
+          of: Ingress
+      - equal:
+          path: spec.ingressClassName
+          value: nginx
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /playground
+      - equal:
+          path: spec.rules[0].http.paths[0].pathType
+          value: Prefix
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: playground
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.name
+          value: http
+      - equal:
+          path: spec.rules[0].http.paths[1].path
+          value: /docs
+      - equal:
+          path: spec.rules[0].http.paths[1].backend.service.name
+          value: docs
+      - equal:
+          path: spec.rules[0].http.paths[2].path
+          value: /api
+      - equal:
+          path: spec.rules[0].http.paths[2].backend.service.name
+          value: solidstack
+      - equal:
+          path: spec.rules[0].http.paths[3].path
+          value: /mcp
+      - equal:
+          path: spec.rules[0].http.paths[3].backend.service.name
+          value: solidstack
+
+  - it: should use dapi for api and mcp when MultiService mode
+    set:
+      global.ingress.enabled: true
+      global.coreServices.mode: MultiService
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[2].backend.service.name
+          value: dapi
+      - equal:
+          path: spec.rules[0].http.paths[3].backend.service.name
+          value: dapi
+
+  - it: should render paths with custom basePath
+    set:
+      global.ingress.enabled: true
+      global.ingress.basePath: /wds/
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /wds/playground
+      - equal:
+          path: spec.rules[0].http.paths[1].path
+          value: /wds/docs
+      - equal:
+          path: spec.rules[0].http.paths[2].path
+          value: /wds/api
+      - equal:
+          path: spec.rules[0].http.paths[3].path
+          value: /wds/mcp
+
+  - it: should omit docs path when docs disabled
+    set:
+      global.ingress.enabled: true
+      global.auxiliaryServices.docs.enabled: false
+    asserts:
+      - notContains:
+          path: spec.rules[0].http.paths
+          content:
+            path: /docs
+
+  - it: should omit playground path when playground disabled
+    set:
+      global.ingress.enabled: true
+      global.auxiliaryServices.playground.enabled: false
+    asserts:
+      - notContains:
+          path: spec.rules[0].http.paths
+          content:
+            path: /playground

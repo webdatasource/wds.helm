@@ -1,0 +1,70 @@
+suite: test datakeeper service
+templates:
+  - core-datakeeper-service.yaml
+
+tests:
+  - it: should not render when mode != MultiService
+    set:
+      global.coreServices.mode: SingleService
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render with defaults
+    set:
+      global.coreServices.mode: MultiService
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: spec.ports[0].name
+          value: grpc-web-dk
+      - equal:
+          path: spec.ports[0].port
+          value: 8082
+      - equal:
+          path: spec.ports[0].targetPort
+          value: grpc-web-dk
+      - equal:
+          path: metadata.labels.app
+          value: datakeeper
+      - equal:
+          path: spec.selector.app
+          value: datakeeper
+
+  - it: should merge global and service serviceExtraLabels
+    set:
+      global.coreServices.mode: MultiService
+      global.serviceExtraLabels:
+        globalLabel: g
+        common: global
+      coreServices.datakeeper.serviceExtraLabelsOverride:
+        serviceLabel: s
+        common: service
+    asserts:
+      - equal:
+          path: metadata.labels.globalLabel
+          value: g
+      - equal:
+          path: metadata.labels.serviceLabel
+          value: s
+      - equal:
+          path: metadata.labels.common
+          value: service
+
+  - it: should include shared chart labels and selector labels
+    set:
+      global.coreServices.mode: MultiService
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: wds-helm-chart
+      - equal:
+          path: metadata.labels["app.kubernetes.io/instance"]
+          value: RELEASE-NAME
+      - equal:
+          path: spec.selector["app.kubernetes.io/name"]
+          value: wds-helm-chart
+      - equal:
+          path: spec.selector["app.kubernetes.io/instance"]
+          value: RELEASE-NAME

@@ -1,0 +1,14 @@
+apiVersion: v2
+name: wds-helm-chart
+description: Web Data Source Helm Chart
+home: https://github.com/webdatasource/wds.helm-charts
+icon: https://avatars.githubusercontent.com/u/144216444
+maintainers:
+  - name: WebDataSource
+    email: contact@webdatasource.com
+keywords:
+  - wds
+  - webdatasource
+  - web data source
+appVersion: "v2.0.0"
+version: 1.0.0

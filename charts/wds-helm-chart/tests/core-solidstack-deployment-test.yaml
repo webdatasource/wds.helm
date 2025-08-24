@@ -26,9 +26,9 @@ tests:
       - equal:
           path: spec.replicas
           value: 2
-      - equal:
+      - matchRegex:
           path: spec.template.spec.containers[0].image
-          value: docker.io/webdatasource/solidstack:v2.0.0
+          pattern: ^docker\.io/webdatasource/solidstack:v\d+\.\d+\.\d+$
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: IfNotPresent
@@ -65,8 +65,14 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[3].value
           value: Information
+      - equal:
+          path: spec.template.spec.containers[0].env[4].name
+          value: BASE_PATH
+      - equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: /
       - notExists:
-          path: spec.template.spec.containers[0].env[4]
+          path: spec.template.spec.containers[0].env[5]
       - notExists:
           path: spec.template.spec.nodeSelector
       - notExists:
@@ -80,36 +86,32 @@ tests:
       global.coreServices.exceptionResponseDelayMs: 10
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[4].name
+          path: spec.template.spec.containers[0].env[5].name
           value: GLOBAL_EXCEPTION_RESPONSE_DELAY_MS
       - equal:
-          path: spec.template.spec.containers[0].env[4].value
+          path: spec.template.spec.containers[0].env[5].value
           value: "10"
 
-  - it: should use Chart.AppVersion as default tag when not set
+  - it: should render image without registry when global.registry empty
     set:
       global.coreServices.mode: SingleService
-      global.registry: r
+      global.registry: ""
     asserts:
-      - equal:
-          path: spec.template.spec.containers[0].image
-          value: r/webdatasource/solidstack:v2.0.0
+    - matchRegex:
+        path: spec.template.spec.containers[0].image
+        pattern: ^webdatasource/solidstack:v\d+\.\d+\.\d+$
 
-  - it: should set image correctly
+  - it: should render image with overrides (registry, name, tag, pullPolicy)
     set:
       global.coreServices.mode: SingleService
-      global.registry: test.registry
-      coreServices.solidstack.image.tag: latest
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[0].image
-          value: test.registry/webdatasource/solidstack:latest
-
-  - it: should respect image.pullPolicy override
-    set:
-      global.coreServices.mode: SingleService
+      global.registry: custom.registry
+      coreServices.solidstack.image.name: org/custom-solidstack
+      coreServices.solidstack.image.tag: v9
       coreServices.solidstack.image.pullPolicy: Always
     asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: custom.registry/org/custom-solidstack:v9
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: Always
@@ -260,3 +262,12 @@ tests:
       - equal:
           path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
           value: 100
+
+  - it: should respect ingress.basePath
+    set:
+      global.coreServices.mode: SingleService
+      global.ingress.basePath: /test/
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: /test/

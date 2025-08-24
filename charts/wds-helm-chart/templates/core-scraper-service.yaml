@@ -1,14 +1,8 @@
 {{- if eq .Values.global.coreServices.mode "MultiService" }}
-{{- $labels := (merge (default (dict) .Values.coreServices.scraper.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels)) }}
-{{- $ports := list (dict "name" "grpc-web" "port" 8082 "protocol" "TCP") }}
-{{- $selector := (include "wds-helm-chart.selectorLabels" . | fromYaml) }}
-
-{{ include "wds-helm-chart.service" (dict 
-  "ctx" . 
-  "name" "scraper" 
-  "labels" $labels 
-  "type" "LoadBalancer"
-  "ports" $ports
-  "selector" $selector
-) }}
+  {{ include "wds-helm-chart.service" (dict 
+    "ctx" . 
+    "name" "scraper" 
+    "ports" (list (dict "name" "grpc-web" "port" 8082 "protocol" "TCP"))
+    "labels" (merge (default (dict) .Values.coreServices.scraper.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels))
+  ) }}
 {{- end }}

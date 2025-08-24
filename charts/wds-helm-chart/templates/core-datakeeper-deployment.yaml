@@ -1,29 +1,32 @@
 {{- if eq .Values.global.coreServices.mode "MultiService" }}
-{{- $labels := (merge (default (dict) .Values.coreServices.datakeeper.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels)) }}
-{{- $ports := list (dict "name" "grpc-web-dk" "containerPort" 8082) (dict "name" "grpc-web-rm" "containerPort" 8083) }}
-{{- $env := list
-  (dict "name" "IDEALER_ORIGIN" "value" "http://idealer")
-  (dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString)
-  (dict "name" "LICENSE_KEY" "value" .Values.global.coreServices.license.key)
-  (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
-}}
-{{- if .Values.global.coreServices.cache.connectionString }}
-  {{- $env = append $env (dict "name" "CACHE_CONNECTION_STRING" "value" .Values.global.coreServices.cache.connectionString) }}
-{{- end }}
+  {{- $env := list
+    (dict "name" "IDEALER_ORIGIN" "value" "http://idealer")
+    (dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString)
+    (dict "name" "LICENSE_KEY" "value" .Values.global.coreServices.license.key)
+    (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
+  }}
+  {{- if .Values.global.coreServices.cache.connectionString }}
+    {{- $env = append $env (dict "name" "CACHE_CONNECTION_STRING" "value" .Values.global.coreServices.cache.connectionString) }}
+  {{- end }}
 
-{{ include "wds-helm-chart.deployment" (dict 
-  "ctx" . 
-  "name" "datakeeper" 
-  "labels" $labels 
-  "registry" .Values.global.registry
-  "image" "webdatasource/datakeeper"
-  "tag" (.Values.coreServices.datakeeper.image.tag | default .Chart.AppVersion)
-  "imagePullPolicy" (.Values.coreServices.datakeeper.image.pullPolicy)
-  "replicas" (.Values.coreServices.datakeeper.replicaCount | default 2)
-  "env" $env
-  "ports" $ports
-  "nodeSelector" (.Values.coreServices.datakeeper.nodeSelectorOverride | default .Values.global.nodeSelector)
-  "tolerations" (.Values.coreServices.datakeeper.tolerationsOverride | default .Values.global.tolerations)
-  "affinity" (.Values.coreServices.datakeeper.affinityOverride | default .Values.global.affinity)
-) }}
+  {{ include "wds-helm-chart.deployment" (dict
+    "ctx" .
+    "name" "datakeeper"
+    "labels" (merge (default (dict) .Values.coreServices.datakeeper.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels))
+    "replicas" (.Values.coreServices.datakeeper.replicaCount | default 2)
+    "nodeSelector" (.Values.coreServices.datakeeper.nodeSelectorOverride | default .Values.global.nodeSelector)
+    "tolerations" (.Values.coreServices.datakeeper.tolerationsOverride | default .Values.global.tolerations)
+    "affinity" (.Values.coreServices.datakeeper.affinityOverride | default .Values.global.affinity)
+    "containers" (list
+      (dict
+        "name" "datakeeper"
+        "registry" .Values.global.registry
+        "image" (.Values.coreServices.datakeeper.image.name | default "webdatasource/datakeeper")
+        "tag" (.Values.coreServices.datakeeper.image.tag | default .Chart.AppVersion)
+        "imagePullPolicy" .Values.coreServices.datakeeper.image.pullPolicy
+        "ports" (list (dict "name" "grpc-web-dk" "containerPort" 8082) (dict "name" "grpc-web-rm" "containerPort" 8083))
+        "env" $env
+      )
+    )
+  ) }}
 {{- end }}

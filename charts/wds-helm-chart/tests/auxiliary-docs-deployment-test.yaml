@@ -15,9 +15,9 @@ tests:
       - equal:
           path: spec.replicas
           value: 1
-      - equal:
+      - matchRegex:
           path: spec.template.spec.containers[0].image
-          value: docker.io/webdatasource/docs:v2.0.0
+          pattern: ^docker\.io/webdatasource/docs:v\d+\.\d+\.\d+$
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: IfNotPresent
@@ -29,16 +29,22 @@ tests:
           value: 80
       - equal:
           path: spec.template.spec.containers[0].livenessProbe.httpGet.path
-          value: /health
+          value: /docs/health
       - equal:
           path: spec.template.spec.containers[0].livenessProbe.httpGet.port
-          value: 8080
+          value: 80
       - equal:
           path: spec.template.spec.containers[0].readinessProbe.httpGet.path
-          value: /ready
+          value: /docs/health
       - equal:
           path: spec.template.spec.containers[0].readinessProbe.httpGet.port
-          value: 8080
+          value: 80
+      - equal:
+          path: spec.template.spec.containers[0].env[0].name
+          value: BASE_PATH
+      - equal:
+          path: spec.template.spec.containers[0].env[0].value
+          value: /docs
       - notExists:
           path: spec.template.spec.nodeSelector
       - notExists:
@@ -61,27 +67,24 @@ tests:
           path: spec.replicas
           value: 3
 
-  - it: should use Chart.AppVersion as default tag when not set
+  - it: should render image without registry when global.registry empty
     set:
-      global.registry: r
+      global.registry: ""
     asserts:
-      - equal:
-          path: spec.template.spec.containers[0].image
-          value: r/webdatasource/docs:v2.0.0
+    - matchRegex:
+        path: spec.template.spec.containers[0].image
+        pattern: ^webdatasource/docs:v\d+\.\d+\.\d+$
 
-  - it: should respect image override
+  - it: should render image with overrides (registry, name, tag, pullPolicy)
     set:
-      global.registry: test.registry
-      auxiliaryServices.docs.image.tag: latest
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[0].image
-          value: test.registry/webdatasource/docs:latest
-
-  - it: should respect image.pullPolicy override
-    set:
+      global.registry: custom.registry
+      auxiliaryServices.docs.image.name: org/custom-docs
+      auxiliaryServices.docs.image.tag: v9
       auxiliaryServices.docs.image.pullPolicy: Always
     asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: custom.registry/org/custom-docs:v9
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: Always

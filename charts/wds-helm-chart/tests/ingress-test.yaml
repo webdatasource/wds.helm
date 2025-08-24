@@ -25,10 +25,10 @@ tests:
           value: Prefix
       - equal:
           path: spec.rules[0].http.paths[0].backend.service.name
-          value: playground
+          value: playground-ext
       - equal:
           path: spec.rules[0].http.paths[0].backend.service.port.name
-          value: http
+          value: http-ext
       - equal:
           path: spec.rules[0].http.paths[1].path
           value: /docs

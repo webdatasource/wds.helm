@@ -19,7 +19,5 @@ spec:
     {{- end }}
   selector:
     app: {{ .app | default .name }}
-    {{- with .selector }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
+    {{- include "wds-helm-chart.selectorLabels" .ctx | nindent 4 }}
 {{- end }}

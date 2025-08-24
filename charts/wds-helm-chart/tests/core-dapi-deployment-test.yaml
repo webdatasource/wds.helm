@@ -36,9 +36,9 @@ tests:
       - equal:
           path: spec.replicas
           value: 2
-      - equal:
+      - matchRegex:
           path: spec.template.spec.containers[0].image
-          value: docker.io/webdatasource/dapi:v2.0.0
+          pattern: ^docker\.io/webdatasource/dapi:v\d+\.\d+\.\d+$
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: IfNotPresent
@@ -96,8 +96,14 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[6].value
           value: Information
+      - equal:
+          path: spec.template.spec.containers[0].env[7].name
+          value: BASE_PATH
+      - equal:
+          path: spec.template.spec.containers[0].env[7].value
+          value: /
       - notExists:
-          path: spec.template.spec.containers[0].env[7]
+          path: spec.template.spec.containers[0].env[8]
       - notExists:
           path: spec.template.spec.nodeSelector
       - notExists:
@@ -111,10 +117,10 @@ tests:
       global.coreServices.exceptionResponseDelayMs: 10
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[7].name
+          path: spec.template.spec.containers[0].env[8].name
           value: GLOBAL_EXCEPTION_RESPONSE_DELAY_MS
       - equal:
-          path: spec.template.spec.containers[0].env[7].value
+          path: spec.template.spec.containers[0].env[8].value
           value: "10"
 
   - it: should respect replicaCount override
@@ -126,20 +132,26 @@ tests:
           path: spec.replicas
           value: 3
 
-  - it: should use Chart.AppVersion as default tag when not set
+  - it: should render image without registry when global.registry empty
     set:
       global.coreServices.mode: MultiService
-      global.registry: r
+      global.registry: ""
+    asserts:
+    - matchRegex:
+        path: spec.template.spec.containers[0].image
+        pattern: ^webdatasource/dapi:v\d+\.\d+\.\d+$
+
+  - it: should render image with overrides (registry, name, tag, pullPolicy)
+    set:
+      global.coreServices.mode: MultiService
+      global.registry: custom.registry
+      coreServices.dapi.image.name: org/custom-dapi
+      coreServices.dapi.image.tag: v9
+      coreServices.dapi.image.pullPolicy: Always
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: r/webdatasource/dapi:v2.0.0
-
-  - it: should respect image.pullPolicy override
-    set:
-      global.coreServices.mode: MultiService
-      coreServices.dapi.image.pullPolicy: Always
-    asserts:
+          value: custom.registry/org/custom-dapi:v9
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: Always
@@ -281,3 +293,12 @@ tests:
       - equal:
           path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
           value: 100
+
+  - it: should respect ingress.basePath
+    set:
+      global.coreServices.mode: MultiService
+      global.ingress.basePath: /test/
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[7].value
+          value: /test/

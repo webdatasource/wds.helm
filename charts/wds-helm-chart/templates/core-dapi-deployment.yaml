@@ -1,32 +1,36 @@
 {{- if eq .Values.global.coreServices.mode "MultiService" }}
-{{- $labels := (merge (default (dict) .Values.coreServices.dapi.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels)) }}
-{{- $ports := list (dict "name" "http" "containerPort" 8080) }}
-{{- $env := list
-  (dict "name" "DATAKEEPER_ORIGIN" "value" "http://datakeeper")
-  (dict "name" "SCRAPER_ORIGIN" "value" "http://scraper")
-  (dict "name" "IDEALER_ORIGIN" "value" "http://idealer")
-  (dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString)
-  (dict "name" "JOB_TYPES" "value" (join "," .Values.global.coreServices.jobTypes))
-  (dict "name" "LICENSE_KEY" "value" .Values.global.coreServices.license.key)
-  (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
-}}
-{{- if .Values.global.coreServices.exceptionResponseDelayMs }}
-  {{- $env = append $env (dict "name" "GLOBAL_EXCEPTION_RESPONSE_DELAY_MS" "value" .Values.global.coreServices.exceptionResponseDelayMs) }}
-{{- end }}
+  {{- $env := list
+    (dict "name" "DATAKEEPER_ORIGIN" "value" "http://datakeeper")
+    (dict "name" "SCRAPER_ORIGIN" "value" "http://scraper")
+    (dict "name" "IDEALER_ORIGIN" "value" "http://idealer")
+    (dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString)
+    (dict "name" "JOB_TYPES" "value" (join "," .Values.global.coreServices.jobTypes))
+    (dict "name" "LICENSE_KEY" "value" .Values.global.coreServices.license.key)
+    (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
+    (dict "name" "BASE_PATH" "value" .Values.global.ingress.basePath)
+  }}
+  {{- if .Values.global.coreServices.exceptionResponseDelayMs }}
+    {{- $env = append $env (dict "name" "GLOBAL_EXCEPTION_RESPONSE_DELAY_MS" "value" .Values.global.coreServices.exceptionResponseDelayMs) }}
+  {{- end }}
 
-{{ include "wds-helm-chart.deployment" (dict 
-  "ctx" . 
-  "name" "dapi" 
-  "labels" $labels 
-  "registry" .Values.global.registry
-  "image" "webdatasource/dapi"
-  "tag" (.Values.coreServices.dapi.image.tag | default .Chart.AppVersion)
-  "imagePullPolicy" (.Values.coreServices.dapi.image.pullPolicy)
-  "replicas" (.Values.coreServices.dapi.replicaCount | default 2)
-  "env" $env
-  "ports" $ports
-  "nodeSelector" (.Values.coreServices.dapi.nodeSelectorOverride | default .Values.global.nodeSelector)
-  "tolerations" (.Values.coreServices.dapi.tolerationsOverride | default .Values.global.tolerations)
-  "affinity" (.Values.coreServices.dapi.affinityOverride | default .Values.global.affinity)
-) }}
+  {{ include "wds-helm-chart.deployment" (dict
+    "ctx" .
+    "name" "dapi"
+    "labels" (merge (default (dict) .Values.coreServices.dapi.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels))
+    "replicas" (.Values.coreServices.dapi.replicaCount | default 2)
+    "nodeSelector" (.Values.coreServices.dapi.nodeSelectorOverride | default .Values.global.nodeSelector)
+    "tolerations" (.Values.coreServices.dapi.tolerationsOverride | default .Values.global.tolerations)
+    "affinity" (.Values.coreServices.dapi.affinityOverride | default .Values.global.affinity)
+    "containers" (list
+      (dict
+        "name" "dapi"
+        "registry" .Values.global.registry
+        "image" (.Values.coreServices.dapi.image.name | default "webdatasource/dapi")
+        "tag" (.Values.coreServices.dapi.image.tag | default .Chart.AppVersion)
+        "imagePullPolicy" .Values.coreServices.dapi.image.pullPolicy
+        "ports" (list (dict "name" "http" "containerPort" 8080))
+        "env" $env
+      )
+    )
+  ) }}
 {{- end }}

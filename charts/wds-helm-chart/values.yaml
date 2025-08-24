@@ -77,10 +77,12 @@ coreServices:
     # Number of pod replicas
     replicaCount: 2
     image:
-      # Image pull policy (default: IfNotPresent)
-      pullPolicy: ""
+      # Image name (repository/name)
+      name: ""
       # Image tag (default: .Chart.AppVersion)
       tag: ""
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
     # Override global.resources for this service
     resourcesOverride: {}
     # Override global.deploymentExtraLabels 
@@ -97,10 +99,12 @@ coreServices:
     # Number of pod replicas
     replicaCount: 2
     image:
-      # Image pull policy (default: IfNotPresent)
-      pullPolicy: ""
+      # Image name (repository/name)
+      name: ""
       # Image tag (default: .Chart.AppVersion)
       tag: ""
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
     # Override global.resources for this service
     resourcesOverride: {}
     # Override global.deploymentExtraLabels 
@@ -117,10 +121,12 @@ coreServices:
     # Number of pod replicas
     replicaCount: 2
     image:
-      # Image pull policy (default: IfNotPresent)
-      pullPolicy: ""
+      # Image name (repository/name)
+      name: ""
       # Image tag (default: .Chart.AppVersion)
       tag: ""
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
     # Override global.resources for this service
     resourcesOverride: {}
     # Override global.deploymentExtraLabels 
@@ -137,10 +143,12 @@ coreServices:
     # Number of pod replicas
     replicaCount: 2
     image:
-      # Image pull policy (default: IfNotPresent)
-      pullPolicy: ""
+      # Image name (repository/name)
+      name: ""
       # Image tag (default: .Chart.AppVersion)
       tag: ""
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
     # Override global.resources for this service
     resourcesOverride: {}
     # Override global.deploymentExtraLabels 
@@ -157,10 +165,12 @@ coreServices:
     # Number of pod replicas
     replicaCount: 2
     image:
-      # Image pull policy (default: IfNotPresent)
-      pullPolicy: ""
+      # Image name (repository/name)
+      name: ""
       # Image tag (default: .Chart.AppVersion)
       tag: ""
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
     # Override global.resources for this service
     resourcesOverride: {}
     # Override global.deploymentExtraLabels 
@@ -177,10 +187,12 @@ coreServices:
     # Number of pod replicas
     replicaCount: 2
     image:
-      # Image pull policy (default: IfNotPresent)
-      pullPolicy: ""
+      # Image name (repository/name)
+      name: ""
       # Image tag (default: .Chart.AppVersion)
       tag: ""
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
     # Override global.resources for this service
     resourcesOverride: {}
     # Override global.deploymentExtraLabels 
@@ -198,10 +210,12 @@ auxiliaryServices:
     # Number of pod replicas
     replicaCount: 1
     image:
-      # Image pull policy (default: IfNotPresent)
-      pullPolicy: ""
+      # Image name (repository/name)
+      name: ""
       # Image tag (default: .Chart.AppVersion)
       tag: ""
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
     # Override global.resources for this service
     resourcesOverride: {}
     # Override global.deploymentExtraLabels 
@@ -218,10 +232,12 @@ auxiliaryServices:
     # Number of pod replicas
     replicaCount: 1
     image:
-      # Image pull policy (default: IfNotPresent)
-      pullPolicy: ""
+      # Image name (repository/name)
+      name: ""
       # Image tag (default: .Chart.AppVersion)
       tag: ""
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
     # Override global.resources for this service
     resourcesOverride: {}
     # Override global.deploymentExtraLabels 

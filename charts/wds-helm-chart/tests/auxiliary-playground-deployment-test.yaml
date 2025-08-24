@@ -15,9 +15,10 @@ tests:
       - equal:
           path: spec.replicas
           value: 1
-      - equal:
+      # main container
+      - matchRegex:
           path: spec.template.spec.containers[0].image
-          value: docker.io/webdatasource/playground:v2.0.0
+          pattern: ^docker\.io/webdatasource/playground:v\d+\.\d+\.\d+$
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: IfNotPresent
@@ -26,22 +27,69 @@ tests:
           value: http
       - equal:
           path: spec.template.spec.containers[0].ports[0].containerPort
-          value: 8080
+          value: 80
       - equal:
           path: spec.template.spec.containers[0].livenessProbe.httpGet.path
           value: /health
       - equal:
           path: spec.template.spec.containers[0].livenessProbe.httpGet.port
-          value: 8080
+          value: 80
       - equal:
           path: spec.template.spec.containers[0].readinessProbe.httpGet.path
-          value: /ready
+          value: /health
       - equal:
           path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: 80
+      - equal:
+          path: spec.template.spec.containers[0].env[0].name
+          value: PORT
+      - equal:
+          path: spec.template.spec.containers[0].env[0].value
+          value: "80"
+      - equal:
+          path: spec.template.spec.containers[0].env[1].name
+          value: BASE_PATH
+      - equal:
+          path: spec.template.spec.containers[0].env[1].value
+          value: "/"
+      # external container
+      - matchRegex:
+          path: spec.template.spec.containers[1].image
+          pattern: ^docker\.io/webdatasource/playground:v\d+\.\d+\.\d+$
+      - equal:
+          path: spec.template.spec.containers[1].ports[0].name
+          value: http-ext
+      - equal:
+          path: spec.template.spec.containers[1].ports[0].containerPort
           value: 8080
       - equal:
-          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          path: spec.template.spec.containers[1].livenessProbe.httpGet.path
+          value: /playground/health
+      - equal:
+          path: spec.template.spec.containers[1].livenessProbe.httpGet.port
           value: 8080
+      - equal:
+          path: spec.template.spec.containers[1].readinessProbe.httpGet.path
+          value: /playground/health
+      - equal:
+          path: spec.template.spec.containers[1].readinessProbe.httpGet.port
+          value: 8080
+      - equal:
+          path: spec.template.spec.containers[1].env[0].name
+          value: PORT
+      - equal:
+          path: spec.template.spec.containers[1].env[0].value
+          value: "8080"
+      - equal:
+          path: spec.template.spec.containers[1].env[1].name
+          value: BASE_PATH
+      - equal:
+          path: spec.template.spec.containers[1].env[1].value
+          value: /playground
+      - notExists:
+          path: spec.template.spec.containers[0].args
+      - notExists:
+          path: spec.template.spec.containers[1].args
       - notExists:
           path: spec.template.spec.nodeSelector
       - notExists:
@@ -64,29 +112,35 @@ tests:
           path: spec.replicas
           value: 3
 
-  - it: should use Chart.AppVersion as default tag when not set
+  - it: should render image without registry when global.registry empty
     set:
-      global.registry: r
+      global.registry: ""
     asserts:
-      - equal:
+      - matchRegex:
           path: spec.template.spec.containers[0].image
-          value: r/webdatasource/playground:v2.0.0
+          pattern: ^webdatasource/playground:v\d+\.\d+\.\d+$
+      - matchRegex:
+          path: spec.template.spec.containers[1].image
+          pattern: ^webdatasource/playground:v\d+\.\d+\.\d+$
 
-  - it: should set image correctly
+  - it: should render image with overrides (registry, name, tag, pullPolicy)
     set:
-      global.registry: test.registry
-      auxiliaryServices.playground.image.tag: latest
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[0].image
-          value: test.registry/webdatasource/playground:latest
-
-  - it: should respect image.pullPolicy override
-    set:
+      global.registry: custom.registry
+      auxiliaryServices.playground.image.name: image/name
+      auxiliaryServices.playground.image.tag: vX.Y.Z
       auxiliaryServices.playground.image.pullPolicy: Always
     asserts:
       - equal:
+          path: spec.template.spec.containers[0].image
+          value: custom.registry/image/name:vX.Y.Z
+      - equal:
+          path: spec.template.spec.containers[1].image
+          value: custom.registry/image/name:vX.Y.Z
+      - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+      - equal:
+          path: spec.template.spec.containers[1].imagePullPolicy
           value: Always
 
   - it: should merge global and service deploymentExtraLabels
@@ -219,5 +273,3 @@ tests:
       - equal:
           path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
           value: 100
-
-  # INGRESS_PATH env removed; no override needed

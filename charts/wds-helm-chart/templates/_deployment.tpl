@@ -7,7 +7,7 @@ metadata:
     app: {{ .name }}
     {{- include "wds-helm-chart.labels" .ctx | nindent 4 }}
     {{- with .labels }}
-    {{- toYaml . | nindent 4 }}
+      {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   replicas: {{ .replicas }}
@@ -34,12 +34,29 @@ spec:
         {{- toYaml .affinity | nindent 8 }}
       {{- end }}
       containers:
-        - name: {{ .name }}
-          image: {{ .registry }}/{{ .image }}:{{ .tag }}
-          imagePullPolicy: {{ .imagePullPolicy | default "IfNotPresent" }}
-          {{- if .env }}
+        {{- range $c := .containers }}
+        - name: {{ $c.name }}
+          {{- if $c.registry }}
+          image: {{ $c.registry }}/{{ $c.image }}:{{ $c.tag }}
+          {{- else }}
+          image: {{ $c.image }}:{{ $c.tag }}
+          {{- end }}
+          imagePullPolicy: {{ $c.imagePullPolicy | default "IfNotPresent" }}
+          {{- if $c.command }}
+          command:
+            {{- range $c.command }}
+            - {{ . | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if $c.args }}
+          args:
+            {{- range $c.args }}
+            - {{ . | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if $c.env }}
           env:
-            {{- range .env }}
+            {{- range $c.env }}
             - name: {{ .name }}
               {{- if hasKey . "valueFrom" }}
               valueFrom:
@@ -49,23 +66,24 @@ spec:
               {{- end }}
             {{- end }}
           {{- end }}
-          {{- if .ports }}
+          {{- if $c.ports }}
           ports:
-            {{- range .ports }}
+            {{- range $c.ports }}
             - name: {{ .name }}
               containerPort: {{ .containerPort }}
             {{- end }}
           {{- end }}
           livenessProbe:
             httpGet:
-              path: /health
-              port: 8080
+              path: {{ $c.livenessProbePath | default "/health" }}
+              port: {{ $c.livenessProbePort | default 8080 }}
             initialDelaySeconds: 5
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /ready
-              port: 8080
+              path: {{ $c.readinessProbePath | default "/ready" }}
+              port: {{ $c.readinessProbePort | default 8080 }}
             initialDelaySeconds: 5
             periodSeconds: 10
+        {{- end }}
 {{- end }}

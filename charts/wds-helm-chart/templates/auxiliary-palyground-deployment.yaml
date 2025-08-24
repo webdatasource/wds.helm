@@ -1,21 +1,48 @@
 {{- if .Values.global.auxiliaryServices.playground.enabled }}
-{{- $labels := (merge (default (dict) .Values.auxiliaryServices.playground.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels)) }}
-{{- $env := list }}
-{{- $ports := list (dict "name" "http" "containerPort" 8080) }}
+  {{- $imageName := (.Values.auxiliaryServices.playground.image.name | default "webdatasource/playground") }}
+  {{- $imageTag := (.Values.auxiliaryServices.playground.image.tag | default .Chart.AppVersion) }}
 
-{{ include "wds-helm-chart.deployment" (dict 
-  "ctx" . 
-  "name" "playground" 
-  "labels" $labels 
-  "registry" .Values.global.registry
-  "image" "webdatasource/playground"
-  "tag" (.Values.auxiliaryServices.playground.image.tag | default .Chart.AppVersion)
-  "imagePullPolicy" (.Values.auxiliaryServices.playground.image.pullPolicy)
-  "replicas" (.Values.auxiliaryServices.playground.replicaCount | default 1)
-  "env" $env
-  "ports" $ports
-  "nodeSelector" (.Values.auxiliaryServices.playground.nodeSelectorOverride | default .Values.global.nodeSelector)
-  "tolerations" (.Values.auxiliaryServices.playground.tolerationsOverride | default .Values.global.tolerations)
-  "affinity" (.Values.auxiliaryServices.playground.affinityOverride | default .Values.global.affinity)
-) }}
+  {{ include "wds-helm-chart.deployment" (dict
+    "ctx" .
+    "name" "playground"
+    "labels" (merge (default (dict) .Values.auxiliaryServices.playground.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels))
+    "replicas" (.Values.auxiliaryServices.playground.replicaCount | default 1)
+    "nodeSelector" (.Values.auxiliaryServices.playground.nodeSelectorOverride | default .Values.global.nodeSelector)
+    "tolerations" (.Values.auxiliaryServices.playground.tolerationsOverride | default .Values.global.tolerations)
+    "affinity" (.Values.auxiliaryServices.playground.affinityOverride | default .Values.global.affinity)
+    "containers" (list
+      (dict
+        "name" "internal"
+        "registry" .Values.global.registry
+        "image" $imageName
+        "tag" $imageTag
+        "imagePullPolicy" .Values.auxiliaryServices.playground.image.pullPolicy
+        "ports" (list (dict "name" "http" "containerPort" 80))
+        "env" (list
+          (dict "name" "PORT" "value" "80")
+          (dict "name" "BASE_PATH" "value" "/")
+        )
+        "livenessProbePath" "/health"
+        "livenessProbePort" 80
+        "readinessProbePath" "/health"
+        "readinessProbePort" 80
+      )
+      (dict
+        "name" "external"
+        "registry" .Values.global.registry
+        "image" $imageName
+        "tag" $imageTag
+        "imagePullPolicy" .Values.auxiliaryServices.playground.image.pullPolicy
+        "ports" (list (dict "name" "http-ext" "containerPort" 8080))
+        "env" (list
+          (dict "name" "PORT" "value" "8080")
+          (dict "name" "BASE_PATH" "value" (print .Values.global.ingress.basePath "playground"))
+        )
+        "livenessProbePath" (print .Values.global.ingress.basePath "playground/health")
+        "livenessProbePort" 8080
+        "readinessProbePath" (print .Values.global.ingress.basePath "playground/health")
+        "readinessProbePort" 8080
+      )
+    )
+  ) }}
 {{- end }}

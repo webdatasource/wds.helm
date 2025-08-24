@@ -23,3 +23,14 @@ Selector labels.
 app.kubernetes.io/name: {{ .Chart.Name }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
+
+{{/*
+Validate ingress basePath. It must be exactly '/' or end with '/'.
+Usage: {{ include "wds-helm-chart.validateIngressBasePath" . }} (produces no output unless error)
+*/}}
+{{- define "wds-helm-chart.validateIngressBasePath" -}}
+{{- $val := (default "/" .Values.global.ingress.basePath) -}}
+{{- if not (or (eq $val "/") (regexMatch "/.+/$" $val)) -}}
+{{- fail (printf "global.ingress.basePath must be '/' or end with '/'. Current value: '%s'" $val) -}}
+{{- end -}}
+{{- end -}}

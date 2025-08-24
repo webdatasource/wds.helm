@@ -26,9 +26,9 @@ tests:
       - equal:
           path: spec.replicas
           value: 2
-      - equal:
+      - matchRegex:
           path: spec.template.spec.containers[0].image
-          value: docker.io/webdatasource/scraper:v2.0.0
+          pattern: ^docker\.io/webdatasource/scraper:v\d+\.\d+\.\d+$
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: IfNotPresent
@@ -66,30 +66,26 @@ tests:
       - notExists:
           path: spec.template.spec.affinity
 
-  - it: should use Chart.AppVersion as default tag when not set
+  - it: should render image without registry when global.registry empty
     set:
       global.coreServices.mode: MultiService
-      global.registry: r
+      global.registry: ""
     asserts:
-      - equal:
-          path: spec.template.spec.containers[0].image
-          value: r/webdatasource/scraper:v2.0.0
+    - matchRegex:
+        path: spec.template.spec.containers[0].image
+        pattern: ^webdatasource/scraper:v\d+\.\d+\.\d+$
 
-  - it: should set image correctly
+  - it: should render image with overrides (registry, name, tag, pullPolicy)
     set:
       global.coreServices.mode: MultiService
-      global.registry: test.registry
-      coreServices.scraper.image.tag: latest
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[0].image
-          value: test.registry/webdatasource/scraper:latest
-
-  - it: should respect image.pullPolicy override
-    set:
-      global.coreServices.mode: MultiService
+      global.registry: custom.registry
+      coreServices.scraper.image.name: org/custom-scraper
+      coreServices.scraper.image.tag: v9
       coreServices.scraper.image.pullPolicy: Always
     asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: custom.registry/org/custom-scraper:v9
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: Always

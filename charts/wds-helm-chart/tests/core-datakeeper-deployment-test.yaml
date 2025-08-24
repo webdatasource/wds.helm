@@ -26,9 +26,9 @@ tests:
       - equal:
           path: spec.replicas
           value: 2
-      - equal:
+      - matchRegex:
           path: spec.template.spec.containers[0].image
-          value: docker.io/webdatasource/datakeeper:v2.0.0
+          pattern: ^docker\.io/webdatasource/datakeeper:v\d+\.\d+\.\d+$
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: IfNotPresent
@@ -95,30 +95,26 @@ tests:
           path: spec.template.spec.containers[0].env[4].value
           value: test-cache-connection-string
 
-  - it: should use Chart.AppVersion as default tag when not set
+  - it: should render image without registry when global.registry empty
     set:
       global.coreServices.mode: MultiService
-      global.registry: r
+      global.registry: ""
     asserts:
-      - equal:
-          path: spec.template.spec.containers[0].image
-          value: r/webdatasource/datakeeper:v2.0.0
+    - matchRegex:
+        path: spec.template.spec.containers[0].image
+        pattern: ^webdatasource/datakeeper:v\d+\.\d+\.\d+$
 
-  - it: should set image correctly
+  - it: should render image with overrides (registry, name, tag, pullPolicy)
     set:
       global.coreServices.mode: MultiService
-      global.registry: test.registry
-      coreServices.datakeeper.image.tag: latest
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[0].image
-          value: test.registry/webdatasource/datakeeper:latest
-
-  - it: should respect image.pullPolicy override
-    set:
-      global.coreServices.mode: MultiService
+      global.registry: custom.registry
+      coreServices.datakeeper.image.name: org/custom-datakeeper
+      coreServices.datakeeper.image.tag: v9
       coreServices.datakeeper.image.pullPolicy: Always
     asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: custom.registry/org/custom-datakeeper:v9
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: Always

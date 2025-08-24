@@ -1,13 +1,8 @@
 {{- if .Values.global.auxiliaryServices.docs.enabled }}
-{{- $labels := (merge (default (dict) .Values.auxiliaryServices.docs.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels)) }}
-{{- $ports := list (dict "name" "http" "port" 80 "protocol" "TCP") }}
-{{- $selector := (include "wds-helm-chart.selectorLabels" . | fromYaml) }}
-
-{{ include "wds-helm-chart.service" (dict 
-  "ctx" . 
-  "name" "docs" 
-  "labels" $labels 
-  "ports" $ports
-  "selector" $selector
-) }}
+  {{ include "wds-helm-chart.service" (dict 
+    "ctx" . 
+    "name" "docs" 
+    "ports" (list (dict "name" "http" "port" 80 "protocol" "TCP"))
+    "labels" (merge (default (dict) .Values.auxiliaryServices.docs.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels))
+  ) }}
 {{- end }}

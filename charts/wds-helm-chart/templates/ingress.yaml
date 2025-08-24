@@ -1,4 +1,5 @@
 {{- if .Values.global.ingress.enabled }}
+{{- include "wds-helm-chart.validateIngressBasePath" . -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -21,9 +22,9 @@ spec:
           pathType: Prefix
           backend:
             service:
-              name: playground
+              name: playground-ext
               port:
-                name: http
+                name: http-ext
         {{- end }}
         {{- if .Values.global.auxiliaryServices.docs.enabled }}
         - path: {{ .Values.global.ingress.basePath }}docs

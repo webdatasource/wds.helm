@@ -3,6 +3,24 @@ entries:
   wds-helm-chart:
   - apiVersion: v2
     appVersion: v2.0.1
+    created: "2025-08-26T20:08:55.909543799Z"
+    description: Web Data Source Helm Chart
+    digest: d19b1901fed364705af7dd90a3b298b369e185e5fd9c8cdbb4a733bda64476c5
+    home: https://github.com/webdatasource/wds.helm-charts
+    icon: https://avatars.githubusercontent.com/u/144216444
+    keywords:
+    - wds
+    - webdatasource
+    - web data source
+    maintainers:
+    - email: contact@webdatasource.com
+      name: WebDataSource
+    name: wds-helm-chart
+    urls:
+    - https://github.com/webdatasource/wds.helm/releases/download/wds-helm-chart-1.0.2/wds-helm-chart-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
+    appVersion: v2.0.1
     created: "2025-08-24T21:03:39.36788106Z"
     description: Web Data Source Helm Chart
     digest: ab029f5969274ac6a599f8cef07eebc829b0065e7de84ec89ae1ed678fa06e3d
@@ -37,4 +55,4 @@ entries:
     urls:
     - https://github.com/webdatasource/wds.helm-charts/releases/download/wds-helm-chart-1.0.0/wds-helm-chart-1.0.0.tgz
     version: 1.0.0
-generated: "2025-08-24T21:03:39.367893083Z"
+generated: "2025-08-26T20:08:55.909555791Z"

@@ -25,7 +25,7 @@ tests:
           of: Deployment
       - equal:
           path: spec.replicas
-          value: 2
+          value: 1
       - matchRegex:
           path: spec.template.spec.containers[0].image
           pattern: ^docker\.io/webdatasource/solidstack:v\d+\.\d+\.\d+$
@@ -116,14 +116,14 @@ tests:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: Always
 
-  - it: should respect replicaCount override
+  - it: should not respect replicaCount override
     set:
       global.coreServices.mode: SingleService
       coreServices.solidstack.replicaCount: 3
     asserts:
       - equal:
           path: spec.replicas
-          value: 3
+          value: 1
 
   - it: should merge global and service deploymentExtraLabels
     set:

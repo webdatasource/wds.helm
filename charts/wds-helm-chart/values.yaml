@@ -74,8 +74,6 @@ global:
     basePath: "/"
 coreServices:
   solidstack:
-    # Number of pod replicas
-    replicaCount: 2
     image:
       # Image name (repository/name)
       name: ""

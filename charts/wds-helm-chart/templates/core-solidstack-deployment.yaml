@@ -14,7 +14,7 @@
     "ctx" .
     "name" "solidstack"
     "labels" (merge (default (dict) .Values.coreServices.solidstack.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels))
-    "replicas" (.Values.coreServices.solidstack.replicaCount | default 1)
+    "replicas" "1"
     "nodeSelector" (.Values.coreServices.solidstack.nodeSelectorOverride | default .Values.global.nodeSelector)
     "tolerations" (.Values.coreServices.solidstack.tolerationsOverride | default .Values.global.tolerations)
     "affinity" (.Values.coreServices.solidstack.affinityOverride | default .Values.global.affinity)

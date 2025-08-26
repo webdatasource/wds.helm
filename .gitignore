@@ -45,3 +45,6 @@ __pycache__/
 *.swp
 *.swo
 *.tmp
+
+# Built charts
+*.tgz

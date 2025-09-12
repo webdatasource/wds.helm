@@ -1,0 +1,13 @@
+{{- if eq .Values.global.coreServices.mode "MultiService" }}
+  {{- $name := "crawler" }}
+  {{- $pdbEnabled := .Values.coreServices.crawler.pdb.enabled | default .Values.global.pdb.enabled }}
+  {{- if $pdbEnabled }}
+    {{ include "wds-helm-chart.pdb" (dict
+        "ctx" .
+        "name" $name
+        "minAvailable" (.Values.coreServices.crawler.pdb.minAvailable | default .Values.global.pdb.minAvailable)
+        "maxUnavailable" (.Values.coreServices.crawler.pdb.maxUnavailable | default .Values.global.pdb.maxUnavailable)
+      ) }}
+  {{- end }}
+{{- end }}
+

@@ -1,4 +1,5 @@
 {{- if eq .Values.global.coreServices.mode "MultiService" }}
+  {{- $name := "dapi" }}
   {{- $env := list
     (dict "name" "DATAKEEPER_ORIGIN" "value" "http://datakeeper")
     (dict "name" "SCRAPER_ORIGIN" "value" "http://scraper")
@@ -15,7 +16,7 @@
 
   {{ include "wds-helm-chart.deployment" (dict
     "ctx" .
-    "name" "dapi"
+    "name" $name
     "labels" (merge (default (dict) .Values.coreServices.dapi.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels))
     "replicas" (.Values.coreServices.dapi.replicaCount | default 2)
     "nodeSelector" (.Values.coreServices.dapi.nodeSelectorOverride | default .Values.global.nodeSelector)

@@ -1,7 +1,8 @@
 {{- if eq .Values.global.coreServices.mode "MultiService" }}
+  {{- $name := "scraper" }}
   {{ include "wds-helm-chart.service" (dict 
     "ctx" . 
-    "name" "scraper" 
+    "name" $name 
     "ports" (list (dict "name" "grpc-web" "port" 8082 "protocol" "TCP" "targetPort" "grpc-web"))
     "labels" (merge (default (dict) .Values.coreServices.scraper.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels))
   ) }}

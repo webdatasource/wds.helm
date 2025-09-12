@@ -1,0 +1,15 @@
+{{- if eq .Values.global.coreServices.mode "MultiService" }}
+  {{- $name := "dapi" }}
+  {{- $hpaEnabled := .Values.coreServices.dapi.hpa.enabled | default .Values.global.hpa.enabled }}
+  {{- if $hpaEnabled }}
+    {{ include "wds-helm-chart.hpa" (dict
+        "ctx" .
+        "name" $name
+        "minReplicas" (.Values.coreServices.dapi.hpa.minReplicas | default .Values.global.hpa.minReplicas)
+        "maxReplicas" (.Values.coreServices.dapi.hpa.maxReplicas | default .Values.global.hpa.maxReplicas)
+        "cpu" (.Values.coreServices.dapi.hpa.targetCPUUtilizationPercentage | default .Values.global.hpa.targetCPUUtilizationPercentage)
+        "memory" (.Values.coreServices.dapi.hpa.targetMemoryUtilizationPercentage | default .Values.global.hpa.targetMemoryUtilizationPercentage)
+      ) }}
+  {{- end }}
+{{- end }}
+

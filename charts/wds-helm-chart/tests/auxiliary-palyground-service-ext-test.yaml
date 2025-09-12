@@ -1,6 +1,6 @@
 suite: test playground ext service
 templates:
-  - auxiliary-palyground-ext-service.yaml
+  - auxiliary-palyground-service-ext.yaml
 
 tests:
   - it: should not render when disabled

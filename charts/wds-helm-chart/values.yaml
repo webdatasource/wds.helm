@@ -72,6 +72,23 @@ global:
     # - Docs: http://your-domain/wds/docs
     # - Playground: http://your-domain/wds/playground
     basePath: "/"
+  # Global Horizontal Pod Autoscaler defaults (can be overridden per service under <service>.hpa)
+  hpa:
+    enabled: true
+    # Default minimum number of replicas (used if service.hpa.minReplicas not set)
+    minReplicas: 1
+    # Default maximum number of replicas (used if service.hpa.maxReplicas not set)
+    maxReplicas: 3
+    # Target average CPU utilization percentage
+    targetCPUUtilizationPercentage: 80
+    # Target average Memory utilization percentage (optional; set to null to disable)
+    targetMemoryUtilizationPercentage: null
+  # Global Pod Disruption Budget defaults (can be overridden per service under <service>.pdb)
+  pdb:
+    enabled: true
+    # Specify one of minAvailable or maxUnavailable. If both provided in a service override, minAvailable wins.
+    minAvailable: 1
+    maxUnavailable: null
 coreServices:
   solidstack:
     image:
@@ -93,6 +110,7 @@ coreServices:
     tolerationsOverride: []
     # Override global.affinity for this service
     affinityOverride: {}
+    # HPA/PDB intentionally not supported for solidstack (SingleService mode)
   dapi:
     # Number of pod replicas
     replicaCount: 2
@@ -115,6 +133,8 @@ coreServices:
     tolerationsOverride: []
     # Override global.affinity for this service
     affinityOverride: {}
+    hpa: {}
+    pdb: {}
   datakeeper:
     # Number of pod replicas
     replicaCount: 2
@@ -137,6 +157,8 @@ coreServices:
     tolerationsOverride: []
     # Override global.affinity for this service
     affinityOverride: {}
+    hpa: {}
+    pdb: {}
   crawler:
     # Number of pod replicas
     replicaCount: 2
@@ -159,6 +181,8 @@ coreServices:
     tolerationsOverride: []
     # Override global.affinity for this service
     affinityOverride: {}
+    hpa: {}
+    pdb: {}
   scraper:
     # Number of pod replicas
     replicaCount: 2
@@ -181,6 +205,8 @@ coreServices:
     tolerationsOverride: []
     # Override global.affinity for this service
     affinityOverride: {}
+    hpa: {}
+    pdb: {}
   idealer:
     # Number of pod replicas
     replicaCount: 2
@@ -203,6 +229,8 @@ coreServices:
     tolerationsOverride: []
     # Override global.affinity for this service
     affinityOverride: {}
+    hpa: {}
+    pdb: {}
 auxiliaryServices:
   playground:
     # Number of pod replicas
@@ -226,6 +254,8 @@ auxiliaryServices:
     tolerationsOverride: []
     # Override global.affinity for this service
     affinityOverride: {}
+    hpa: {}
+    pdb: {}
   docs:
     # Number of pod replicas
     replicaCount: 1
@@ -248,3 +278,5 @@ auxiliaryServices:
     tolerationsOverride: []
     # Override global.affinity for this service
     affinityOverride: {}
+    hpa: {}
+    pdb: {}

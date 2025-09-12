@@ -1,7 +1,8 @@
 {{- if eq .Values.global.coreServices.mode "SingleService" }}
+  {{- $name := "solidstack" }}
   {{ include "wds-helm-chart.service" (dict 
     "ctx" . 
-    "name" "solidstack" 
+    "name" $name 
     "ports" (list (dict "name" "http" "port" 80 "protocol" "TCP" "targetPort" "http"))
     "labels" (merge (default (dict) .Values.coreServices.solidstack.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels))
   ) }}

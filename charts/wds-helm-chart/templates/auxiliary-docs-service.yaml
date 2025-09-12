@@ -1,7 +1,8 @@
 {{- if .Values.global.auxiliaryServices.docs.enabled }}
+  {{- $name := "docs" }}
   {{ include "wds-helm-chart.service" (dict 
     "ctx" . 
-    "name" "docs" 
+    "name" $name 
     "ports" (list (dict "name" "http" "protocol" "TCP" "port" 80 "targetPort" "http"))
     "labels" (merge (default (dict) .Values.auxiliaryServices.docs.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels))
   ) }}

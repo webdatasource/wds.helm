@@ -2,7 +2,7 @@
   {{ include "wds-helm-chart.service" (dict 
     "ctx" . 
     "name" "docs" 
-    "ports" (list (dict "name" "http" "port" 80 "protocol" "TCP"))
+    "ports" (list (dict "name" "http" "protocol" "TCP" "port" 80 "targetPort" "http"))
     "labels" (merge (default (dict) .Values.auxiliaryServices.docs.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels))
   ) }}
 {{- end }}

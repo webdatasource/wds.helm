@@ -14,7 +14,7 @@ spec:
     {{- range .ports }}
     - name: {{ .name }}
       port: {{ .port }}
-      targetPort: {{ .name }}
+      targetPort: {{ .targetPort }}
       protocol: TCP
     {{- end }}
   selector:

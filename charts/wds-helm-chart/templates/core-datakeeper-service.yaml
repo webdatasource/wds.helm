@@ -2,7 +2,7 @@
   {{ include "wds-helm-chart.service" (dict 
     "ctx" . 
     "name" "datakeeper" 
-    "ports" (list (dict "name" "grpc-web-dk" "port" 8082 "protocol" "TCP"))
+    "ports" (list (dict "name" "grpc-web-dk" "port" 8082 "protocol" "TCP" "targetPort" "grpc-web-dk"))
     "labels" (merge (default (dict) .Values.coreServices.datakeeper.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels))
   ) }}
 {{- end }}

@@ -20,7 +20,7 @@
         "registry" .Values.global.registry
         "image" (.Values.coreServices.idealer.image.name | default "webdatasource/idealer")
         "tag" (.Values.coreServices.idealer.image.tag | default .Chart.AppVersion)
-        "imagePullPolicy" .Values.coreServices.idealer.image.pullPolicy
+        "imagePullPolicy" (.Values.coreServices.idealer.image.pullPolicy | default "IfNotPresent")
         "ports" (list (dict "name" "grpc-web" "containerPort" 8082))
         "env" (list
           (dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString)

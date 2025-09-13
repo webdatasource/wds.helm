@@ -41,7 +41,7 @@ spec:
           {{- else }}
           image: {{ $c.image }}:{{ $c.tag }}
           {{- end }}
-          imagePullPolicy: {{ $c.imagePullPolicy | default "IfNotPresent" }}
+          imagePullPolicy: {{ $c.imagePullPolicy }}
           {{- if $c.command }}
           command:
             {{- range $c.command }}

@@ -28,7 +28,7 @@
         "registry" .Values.global.registry
         "image" (.Values.coreServices.dapi.image.name | default "webdatasource/dapi")
         "tag" (.Values.coreServices.dapi.image.tag | default .Chart.AppVersion)
-        "imagePullPolicy" .Values.coreServices.dapi.image.pullPolicy
+        "imagePullPolicy" (.Values.coreServices.dapi.image.pullPolicy | default "IfNotPresent")
         "ports" (list (dict "name" "http" "containerPort" 8080))
         "env" $env
       )

@@ -17,7 +17,7 @@
         "registry" .Values.global.registry
         "image" $imageName
         "tag" $imageTag
-        "imagePullPolicy" .Values.auxiliaryServices.playground.image.pullPolicy
+        "imagePullPolicy" (.Values.auxiliaryServices.playground.image.pullPolicy | default "IfNotPresent")
         "ports" (list (dict "name" "http" "containerPort" 80))
         "env" (list
           (dict "name" "PORT" "value" "80")
@@ -33,7 +33,7 @@
         "registry" .Values.global.registry
         "image" $imageName
         "tag" $imageTag
-        "imagePullPolicy" .Values.auxiliaryServices.playground.image.pullPolicy
+        "imagePullPolicy" (.Values.auxiliaryServices.playground.image.pullPolicy | default "IfNotPresent")
         "ports" (list (dict "name" "http-ext" "containerPort" 8080))
         "env" (list
           (dict "name" "PORT" "value" "8080")

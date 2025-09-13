@@ -14,7 +14,7 @@
         "registry" .Values.global.registry
         "image" (.Values.coreServices.scraper.image.name | default "webdatasource/scraper")
         "tag" (.Values.coreServices.scraper.image.tag | default .Chart.AppVersion)
-        "imagePullPolicy" .Values.coreServices.scraper.image.pullPolicy
+        "imagePullPolicy" (.Values.coreServices.scraper.image.pullPolicy | default "IfNotPresent")
         "ports" (list (dict "name" "grpc-web" "containerPort" 8082))
         "env" (list
           (dict "name" "LICENSE_KEY" "value" .Values.global.coreServices.license.key)

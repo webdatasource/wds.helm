@@ -53,6 +53,8 @@ global:
     docs:
       # Whether to deploy docs service
       enabled: true
+      # Docs image default tag. Its release cadence is different from other services because documentation is released more often
+      defaultTag: "v2.0"
     playground:
       # Whether to deploy playground service
       enabled: true
@@ -262,9 +264,9 @@ auxiliaryServices:
     image:
       # Image name (repository/name)
       name: ""
-      # Image tag (default: .Chart.AppVersion)
+      # Image tag (default: global.auxiliaryServices.docs.defaultTag)
       tag: ""
-      # Image pull policy (default: IfNotPresent)
+      # Image pull policy (default: Always)
       pullPolicy: ""
     # Override global.resources for this service
     resourcesOverride: {}

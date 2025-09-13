@@ -25,7 +25,7 @@
         "registry" .Values.global.registry
         "image" (.Values.coreServices.crawler.image.name | default "webdatasource/crawler")
         "tag" (.Values.coreServices.crawler.image.tag | default .Chart.AppVersion)
-        "imagePullPolicy" .Values.coreServices.crawler.image.pullPolicy
+        "imagePullPolicy" (.Values.coreServices.crawler.image.pullPolicy | default "IfNotPresent")
         "ports" (list (dict "name" "grpc-web" "containerPort" 8082))
         "env" $env
       )

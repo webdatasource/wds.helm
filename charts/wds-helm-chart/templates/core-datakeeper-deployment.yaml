@@ -24,7 +24,7 @@
         "registry" .Values.global.registry
         "image" (.Values.coreServices.datakeeper.image.name | default "webdatasource/datakeeper")
         "tag" (.Values.coreServices.datakeeper.image.tag | default .Chart.AppVersion)
-        "imagePullPolicy" .Values.coreServices.datakeeper.image.pullPolicy
+        "imagePullPolicy" (.Values.coreServices.datakeeper.image.pullPolicy | default "IfNotPresent")
         "ports" (list (dict "name" "grpc-web-dk" "containerPort" 8082) (dict "name" "grpc-web-rm" "containerPort" 8083))
         "env" $env
       )

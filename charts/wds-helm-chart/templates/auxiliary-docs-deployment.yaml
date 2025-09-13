@@ -13,8 +13,8 @@
           "name" "docs"
           "registry" .Values.global.registry
           "image" (.Values.auxiliaryServices.docs.image.name | default "webdatasource/docs")
-          "tag" (.Values.auxiliaryServices.docs.image.tag | default .Chart.AppVersion)
-          "imagePullPolicy" (.Values.auxiliaryServices.docs.image.pullPolicy)
+          "tag" (.Values.auxiliaryServices.docs.image.tag | default .Values.global.auxiliaryServices.docs.defaultTag)
+          "imagePullPolicy" (.Values.auxiliaryServices.docs.image.pullPolicy | default "Always")
           "env" (list (dict "name" "BASE_PATH" "value" (print .Values.global.ingress.basePath "docs")))
           "ports" (list (dict "name" "http" "containerPort" 80))
           "livenessProbePath" (print .Values.global.ingress.basePath "docs/health")

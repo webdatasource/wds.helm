@@ -1,0 +1,15 @@
+{{- if eq .Values.global.coreServices.mode "MultiService" }}
+  {{- $name := "datakeeper" }}
+  {{- $hpaEnabled := .Values.coreServices.datakeeper.hpa.enabled | default .Values.global.hpa.enabled }}
+  {{- if $hpaEnabled }}
+    {{ include "wds-helm-chart.hpa" (dict
+        "ctx" .
+        "name" $name
+        "minReplicas" (.Values.coreServices.datakeeper.hpa.minReplicas | default .Values.global.hpa.minReplicas)
+        "maxReplicas" (.Values.coreServices.datakeeper.hpa.maxReplicas | default .Values.global.hpa.maxReplicas)
+        "cpu" (.Values.coreServices.datakeeper.hpa.targetCPUUtilizationPercentage | default .Values.global.hpa.targetCPUUtilizationPercentage)
+        "memory" (.Values.coreServices.datakeeper.hpa.targetMemoryUtilizationPercentage | default .Values.global.hpa.targetMemoryUtilizationPercentage)
+      ) }}
+  {{- end }}
+{{- end }}
+

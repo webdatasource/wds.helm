@@ -1,0 +1,71 @@
+suite: test playground HPA
+templates:
+  - auxiliary-palyground-hpa.yaml
+tests:
+  - it: should not render when playground disabled
+    set:
+      global.auxiliaryServices.playground.enabled: false
+      global.hpa.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render when HPA disabled
+    set:
+      global.auxiliaryServices.playground.enabled: true
+      global.hpa.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render with defaults
+    set:
+      global.auxiliaryServices.playground.enabled: true
+      global.hpa.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: HorizontalPodAutoscaler
+      - equal:
+          path: spec.minReplicas
+          value: 1
+      - equal:
+          path: spec.maxReplicas
+          value: 3
+      - equal:
+          path: spec.metrics[0].resource.name
+          value: cpu
+      - equal:
+          path: spec.metrics[0].resource.target.averageUtilization
+          value: 80
+
+  - it: should allow service-level HPA override values
+    set:
+      global.auxiliaryServices.playground.enabled: true
+      global.hpa.enabled: true
+      auxiliaryServices.playground.hpa.minReplicas: 2
+      auxiliaryServices.playground.hpa.maxReplicas: 5
+      auxiliaryServices.playground.hpa.targetCPUUtilizationPercentage: 70
+      auxiliaryServices.playground.hpa.targetMemoryUtilizationPercentage: 60
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: HorizontalPodAutoscaler
+      - equal:
+          path: spec.minReplicas
+          value: 2
+      - equal:
+          path: spec.maxReplicas
+          value: 5
+      - equal:
+          path: spec.metrics[0].resource.target.averageUtilization
+          value: 70
+      - equal:
+          path: spec.metrics[1].resource.name
+          value: memory
+      - equal:
+          path: spec.metrics[1].resource.target.averageUtilization
+          value: 60
+

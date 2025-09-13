@@ -1,0 +1,15 @@
+{{- if and .Values.global.auxiliaryServices.playground.enabled (.Values.global.hpa) }}
+  {{- $name := "playground" }}
+  {{- $hpaEnabled := .Values.auxiliaryServices.playground.hpa.enabled | default .Values.global.hpa.enabled }}
+  {{- if $hpaEnabled }}
+    {{ include "wds-helm-chart.hpa" (dict
+        "ctx" .
+        "name" $name
+        "minReplicas" (.Values.auxiliaryServices.playground.hpa.minReplicas | default .Values.global.hpa.minReplicas)
+        "maxReplicas" (.Values.auxiliaryServices.playground.hpa.maxReplicas | default .Values.global.hpa.maxReplicas)
+        "cpu" (.Values.auxiliaryServices.playground.hpa.targetCPUUtilizationPercentage | default .Values.global.hpa.targetCPUUtilizationPercentage)
+        "memory" (.Values.auxiliaryServices.playground.hpa.targetMemoryUtilizationPercentage | default .Values.global.hpa.targetMemoryUtilizationPercentage)
+      ) }}
+  {{- end }}
+{{- end }}
+

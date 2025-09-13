@@ -1,0 +1,13 @@
+{{- if and .Values.global.auxiliaryServices.docs.enabled (.Values.global.pdb) }}
+  {{- $name := "docs" }}
+  {{- $pdbEnabled := .Values.auxiliaryServices.docs.pdb.enabled | default .Values.global.pdb.enabled }}
+  {{- if $pdbEnabled }}
+    {{ include "wds-helm-chart.pdb" (dict
+        "ctx" .
+        "name" $name
+        "minAvailable" (.Values.auxiliaryServices.docs.pdb.minAvailable | default .Values.global.pdb.minAvailable)
+        "maxUnavailable" (.Values.auxiliaryServices.docs.pdb.maxUnavailable | default .Values.global.pdb.maxUnavailable)
+      ) }}
+  {{- end }}
+{{- end }}
+

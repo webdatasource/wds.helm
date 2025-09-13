@@ -1,0 +1,13 @@
+{{- if eq .Values.global.coreServices.mode "MultiService" }}
+  {{- $name := "idealer" }}
+  {{- $pdbEnabled := .Values.coreServices.idealer.pdb.enabled | default .Values.global.pdb.enabled }}
+  {{- if $pdbEnabled }}
+    {{ include "wds-helm-chart.pdb" (dict
+        "ctx" .
+        "name" $name
+        "minAvailable" (.Values.coreServices.idealer.pdb.minAvailable | default .Values.global.pdb.minAvailable)
+        "maxUnavailable" (.Values.coreServices.idealer.pdb.maxUnavailable | default .Values.global.pdb.maxUnavailable)
+      ) }}
+  {{- end }}
+{{- end }}
+

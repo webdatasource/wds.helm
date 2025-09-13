@@ -1,10 +1,11 @@
 {{- if .Values.global.auxiliaryServices.playground.enabled }}
+  {{- $name := "playground" }}
   {{- $imageName := (.Values.auxiliaryServices.playground.image.name | default "webdatasource/playground") }}
   {{- $imageTag := (.Values.auxiliaryServices.playground.image.tag | default .Chart.AppVersion) }}
 
   {{ include "wds-helm-chart.deployment" (dict
     "ctx" .
-    "name" "playground"
+    "name" $name
     "labels" (merge (default (dict) .Values.auxiliaryServices.playground.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels))
     "replicas" (.Values.auxiliaryServices.playground.replicaCount | default 1)
     "nodeSelector" (.Values.auxiliaryServices.playground.nodeSelectorOverride | default .Values.global.nodeSelector)
@@ -16,7 +17,7 @@
         "registry" .Values.global.registry
         "image" $imageName
         "tag" $imageTag
-        "imagePullPolicy" .Values.auxiliaryServices.playground.image.pullPolicy
+        "imagePullPolicy" (.Values.auxiliaryServices.playground.image.pullPolicy | default "IfNotPresent")
         "ports" (list (dict "name" "http" "containerPort" 80))
         "env" (list
           (dict "name" "PORT" "value" "80")
@@ -32,7 +33,7 @@
         "registry" .Values.global.registry
         "image" $imageName
         "tag" $imageTag
-        "imagePullPolicy" .Values.auxiliaryServices.playground.image.pullPolicy
+        "imagePullPolicy" (.Values.auxiliaryServices.playground.image.pullPolicy | default "IfNotPresent")
         "ports" (list (dict "name" "http-ext" "containerPort" 8080))
         "env" (list
           (dict "name" "PORT" "value" "8080")

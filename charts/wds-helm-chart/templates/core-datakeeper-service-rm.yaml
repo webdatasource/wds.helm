@@ -1,9 +1,10 @@
 {{- if eq .Values.global.coreServices.mode "MultiService" }}
+  {{- $name := "datakeeper-rm" }}
   {{ include "wds-helm-chart.service" (dict 
     "ctx" . 
-    "name" "datakeeper-rm" 
+    "name" $name 
     "app" "datakeeper"
-    "ports" (list (dict "name" "grpc-web-rm" "port" 8083 "protocol" "TCP"))
+    "ports" (list (dict "name" "grpc-web-rm" "port" 8083 "protocol" "TCP" "targetPort" "grpc-web-rm"))
     "labels" (merge (default (dict) .Values.coreServices.datakeeper.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels))
   ) }}
 {{- end }}

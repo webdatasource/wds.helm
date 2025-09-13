@@ -24,7 +24,7 @@
         "registry" .Values.global.registry
         "image" (.Values.coreServices.solidstack.image.name | default "webdatasource/solidstack")
         "tag" (.Values.coreServices.solidstack.image.tag | default .Chart.AppVersion)
-        "imagePullPolicy" .Values.coreServices.solidstack.image.pullPolicy
+        "imagePullPolicy" (.Values.coreServices.solidstack.image.pullPolicy | default "IfNotPresent")
         "ports" (list (dict "name" "http" "containerPort" 8080))
         "env" $env
       )

@@ -1,0 +1,13 @@
+{{- if eq .Values.global.coreServices.mode "MultiService" }}
+  {{- $name := "dapi" }}
+  {{- $pdbEnabled := .Values.coreServices.dapi.pdb.enabled | default .Values.global.pdb.enabled }}
+  {{- if $pdbEnabled }}
+    {{ include "wds-helm-chart.pdb" (dict
+        "ctx" .
+        "name" $name
+        "minAvailable" (.Values.coreServices.dapi.pdb.minAvailable | default .Values.global.pdb.minAvailable)
+        "maxUnavailable" (.Values.coreServices.dapi.pdb.maxUnavailable | default .Values.global.pdb.maxUnavailable)
+      ) }}
+  {{- end }}
+{{- end }}
+

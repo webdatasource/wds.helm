@@ -1,0 +1,13 @@
+{{- if and .Values.global.auxiliaryServices.playground.enabled (.Values.global.pdb) }}
+  {{- $name := "playground" }}
+  {{- $pdbEnabled := .Values.auxiliaryServices.playground.pdb.enabled | default .Values.global.pdb.enabled }}
+  {{- if $pdbEnabled }}
+    {{ include "wds-helm-chart.pdb" (dict
+        "ctx" .
+        "name" $name
+        "minAvailable" (.Values.auxiliaryServices.playground.pdb.minAvailable | default .Values.global.pdb.minAvailable)
+        "maxUnavailable" (.Values.auxiliaryServices.playground.pdb.maxUnavailable | default .Values.global.pdb.maxUnavailable)
+      ) }}
+  {{- end }}
+{{- end }}
+

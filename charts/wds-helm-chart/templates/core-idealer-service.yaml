@@ -1,8 +1,9 @@
 {{- if eq .Values.global.coreServices.mode "MultiService" }}
+  {{- $name := "idealer" }}
   {{ include "wds-helm-chart.service" (dict 
     "ctx" . 
-    "name" "idealer" 
-    "ports" (list (dict "name" "grpc-web" "port" 8082 "protocol" "TCP"))
+    "name" $name 
+    "ports" (list (dict "name" "grpc-web" "port" 8082 "protocol" "TCP" "targetPort" "grpc-web"))
     "labels" (merge (default (dict) .Values.coreServices.idealer.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels))
   ) }}
 {{- end }}

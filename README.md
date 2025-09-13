@@ -1,3 +1,3 @@
 # WDS Helm Charts
 
-For detailed docuemntation visit the [official website](https://webdatasource.com/releases/latest/server/deployments/helm.html)
+For detailed documentation, visit the Web Data Source [official website](https://webdatasource.com/releases/latest/server/deployments/helm.html)

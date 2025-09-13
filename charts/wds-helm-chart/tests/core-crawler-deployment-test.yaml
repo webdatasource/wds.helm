@@ -1,7 +1,6 @@
 suite: test core crawler deployment
 templates:
   - core-crawler-deployment.yaml
-
 tests:
   - it: should not render when mode != MultiService
     set:
@@ -267,3 +266,5 @@ tests:
       - equal:
           path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
           value: 100
+
+  

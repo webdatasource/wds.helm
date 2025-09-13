@@ -1,9 +1,10 @@
 {{- if .Values.global.auxiliaryServices.playground.enabled }}
+  {{- $name := "playground-ext" }}
   {{ include "wds-helm-chart.service" (dict 
     "ctx" . 
-    "name" "playground-ext" 
+    "name" $name 
     "app" "playground"
-    "ports" (list (dict "name" "http-ext" "port" 80 "protocol" "TCP"))
+    "ports" (list (dict "name" "http-ext" "port" 80 "protocol" "TCP" "targetPort" "http-ext"))
     "labels" (merge (default (dict) .Values.auxiliaryServices.playground.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels))
   ) }}
 {{- end }}

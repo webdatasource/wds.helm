@@ -1,0 +1,42 @@
+suite: test core scraper PDB
+templates:
+  - core-scraper-pdb.yaml
+tests:
+  - it: should not render when mode != MultiService
+    set:
+      global.coreServices.mode: SingleService
+      global.pdb.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render PDB when enabled globally
+    set:
+      global.coreServices.mode: MultiService
+      global.pdb.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: spec.minAvailable
+          value: 1
+
+  - it: should allow service-level PDB override values
+    set:
+      global.coreServices.mode: MultiService
+      global.pdb.enabled: true
+      coreServices.scraper.pdb.minAvailable: 2
+      coreServices.scraper.pdb.maxUnavailable: 1
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: spec.minAvailable
+          value: 2
+      - notExists:
+          path: spec.maxUnavailable
+

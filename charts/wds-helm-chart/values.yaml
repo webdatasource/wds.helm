@@ -257,7 +257,10 @@ auxiliaryServices:
     # Override global.affinity for this service
     affinityOverride: {}
     hpa: {}
-    pdb: {}
+    pdb: {
+      # Enable if replicaCount > 1
+      enabled: false
+    }
   docs:
     # Number of pod replicas
     replicaCount: 1
@@ -281,4 +284,7 @@ auxiliaryServices:
     # Override global.affinity for this service
     affinityOverride: {}
     hpa: {}
-    pdb: {}
+    pdb: {
+      # Enable if replicaCount > 1
+      enabled: false
+    }

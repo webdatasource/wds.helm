@@ -18,6 +18,15 @@ tests:
       - hasDocuments:
           count: 0
 
+  - it: should not render PDB when disable for the service
+    set:
+      global.coreServices.mode: MultiService
+      global.hpa.enabled: true
+      coreServices.scraper.hpa.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
   - it: should render with defaults
     set:
       global.coreServices.mode: MultiService

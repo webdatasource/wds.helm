@@ -18,6 +18,15 @@ tests:
       - hasDocuments:
           count: 0
 
+  - it: should not render PDB when disable for the service
+    set:
+      global.auxiliaryServices.playground.enabled: true
+      global.hpa.enabled: true
+      auxiliaryServices.playground.hpa.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
   - it: should render with defaults
     set:
       global.auxiliaryServices.playground.enabled: true

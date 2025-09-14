@@ -23,6 +23,15 @@ tests:
           path: spec.minAvailable
           value: 1
 
+  - it: should not render PDB when disable for the service
+    set:
+      global.coreServices.mode: MultiService
+      global.pdb.enabled: true
+      coreServices.datakeeper.pdb.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
   - it: should allow service-level PDB override values
     set:
       global.coreServices.mode: MultiService

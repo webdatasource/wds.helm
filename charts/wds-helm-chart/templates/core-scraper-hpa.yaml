@@ -1,15 +1,21 @@
 {{- if eq .Values.global.coreServices.mode "MultiService" }}
   {{- $name := "scraper" }}
-  {{- $hpaEnabled := .Values.coreServices.scraper.hpa.enabled | default .Values.global.hpa.enabled }}
-  {{- if $hpaEnabled }}
+  {{- $global := (default (dict) .Values.global.hpa) }}
+  {{- $service := (default (dict) .Values.coreServices.scraper.hpa) }}
+  {{- $serviceHasEnabled := hasKey $service "enabled" }}
+  {{- $enabled := ternary ($service.enabled) ($global.enabled) $serviceHasEnabled }}
+  {{- if $enabled }}
+    {{- $min := (default $global.minReplicas $service.minReplicas) }}
+    {{- $max := (default $global.maxReplicas $service.maxReplicas) }}
+    {{- $cpu := (default $global.targetCPUUtilizationPercentage $service.targetCPUUtilizationPercentage) }}
+    {{- $mem := (default $global.targetMemoryUtilizationPercentage $service.targetMemoryUtilizationPercentage) }}
     {{ include "wds-helm-chart.hpa" (dict
         "ctx" .
         "name" $name
-        "minReplicas" (.Values.coreServices.scraper.hpa.minReplicas | default .Values.global.hpa.minReplicas)
-        "maxReplicas" (.Values.coreServices.scraper.hpa.maxReplicas | default .Values.global.hpa.maxReplicas)
-        "cpu" (.Values.coreServices.scraper.hpa.targetCPUUtilizationPercentage | default .Values.global.hpa.targetCPUUtilizationPercentage)
-        "memory" (.Values.coreServices.scraper.hpa.targetMemoryUtilizationPercentage | default .Values.global.hpa.targetMemoryUtilizationPercentage)
+        "minReplicas" $min
+        "maxReplicas" $max
+        "cpu" $cpu
+        "memory" $mem
       ) }}
   {{- end }}
 {{- end }}
-

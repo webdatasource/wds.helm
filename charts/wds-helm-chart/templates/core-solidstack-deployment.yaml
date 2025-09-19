@@ -1,6 +1,10 @@
 {{- if eq .Values.global.coreServices.mode "SingleService" }}
+  {{- $dbConn := dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString }}
+  {{- if and (not .Values.global.coreServices.databases.mongodb.connectionString) (hasKey .Values.global.coreServices.databases.mongodb.connectionStringSecretRef "name") (hasKey .Values.global.coreServices.databases.mongodb.connectionStringSecretRef "key") }}
+    {{- $dbConn = dict "name" "DB_CONNECTION_STRING" "valueFrom" (dict "secretKeyRef" (dict "name" .Values.global.coreServices.databases.mongodb.connectionStringSecretRef.name "key" .Values.global.coreServices.databases.mongodb.connectionStringSecretRef.key)) }}
+  {{- end }}
   {{- $env := list
-    (dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString)
+    $dbConn
     (dict "name" "JOB_TYPES" "value" (join "," .Values.global.coreServices.jobTypes))
     (dict "name" "EXTERNAL_IP_ADDRESS_CONFIGS" "value" (join "," .Values.global.coreServices.externalIpConfigs))
     (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)

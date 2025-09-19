@@ -1,7 +1,11 @@
 {{- if eq .Values.global.coreServices.mode "MultiService" }}
   {{- $name := "idealer" }}
+  {{- $dbConn := dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString }}
+  {{- if and (not .Values.global.coreServices.databases.mongodb.connectionString) (hasKey .Values.global.coreServices.databases.mongodb.connectionStringSecretRef "name") (hasKey .Values.global.coreServices.databases.mongodb.connectionStringSecretRef "key") }}
+    {{- $dbConn = dict "name" "DB_CONNECTION_STRING" "valueFrom" (dict "secretKeyRef" (dict "name" .Values.global.coreServices.databases.mongodb.connectionStringSecretRef.name "key" .Values.global.coreServices.databases.mongodb.connectionStringSecretRef.key)) }}
+  {{- end }}
   {{- $env := list
-    (dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString)
+    $dbConn
     (dict "name" "LICENSE_KEY" "value" .Values.global.coreServices.license.key)
     (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
   }}
@@ -22,11 +26,7 @@
         "tag" (.Values.coreServices.idealer.image.tag | default .Chart.AppVersion)
         "imagePullPolicy" (.Values.coreServices.idealer.image.pullPolicy | default "IfNotPresent")
         "ports" (list (dict "name" "grpc-web" "containerPort" 8082))
-        "env" (list
-          (dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString)
-          (dict "name" "LICENSE_KEY" "value" .Values.global.coreServices.license.key)
-          (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
-        )
+        "env" $env
       )
     )
   ) }}

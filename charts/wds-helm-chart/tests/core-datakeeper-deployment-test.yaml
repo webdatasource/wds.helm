@@ -95,6 +95,76 @@ tests:
           path: spec.template.spec.containers[0].env[4].value
           value: test-cache-connection-string
 
+  - it: should support mongodb.connectionStringSecretRef
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.databases.mongodb.connectionString: ""
+      global.coreServices.databases.mongodb.connectionStringSecretRef:
+        name: mongo-secret
+        key: conn
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[1].name
+          value: DB_CONNECTION_STRING
+      - equal:
+          path: spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.name
+          value: mongo-secret
+      - equal:
+          path: spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.key
+          value: conn
+
+  - it: should prefer mongodb.connectionString over secretRef when both set
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.databases.mongodb.connectionString: literal-mongo
+      global.coreServices.databases.mongodb.connectionStringSecretRef:
+        name: mongo-secret
+        key: conn
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[1].name
+          value: DB_CONNECTION_STRING
+      - equal:
+          path: spec.template.spec.containers[0].env[1].value
+          value: literal-mongo
+      - notExists:
+          path: spec.template.spec.containers[0].env[1].valueFrom
+
+  - it: should support cache.connectionStringSecretRef
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.cache.connectionString: ""
+      global.coreServices.cache.connectionStringSecretRef:
+        name: cache-secret
+        key: conn
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[4].name
+          value: CACHE_CONNECTION_STRING
+      - equal:
+          path: spec.template.spec.containers[0].env[4].valueFrom.secretKeyRef.name
+          value: cache-secret
+      - equal:
+          path: spec.template.spec.containers[0].env[4].valueFrom.secretKeyRef.key
+          value: conn
+
+  - it: should prefer cache.connectionString over secretRef when both set
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.cache.connectionString: literal-cache
+      global.coreServices.cache.connectionStringSecretRef:
+        name: cache-secret
+        key: conn
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[4].name
+          value: CACHE_CONNECTION_STRING
+      - equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: literal-cache
+      - notExists:
+          path: spec.template.spec.containers[0].env[4].valueFrom
+
   - it: should render image without registry when global.registry empty
     set:
       global.coreServices.mode: MultiService

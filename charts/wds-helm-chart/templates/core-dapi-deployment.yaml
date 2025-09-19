@@ -1,10 +1,14 @@
 {{- if eq .Values.global.coreServices.mode "MultiService" }}
   {{- $name := "dapi" }}
+  {{- $dbConn := dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString }}
+  {{- if and (not .Values.global.coreServices.databases.mongodb.connectionString) (hasKey .Values.global.coreServices.databases.mongodb.connectionStringSecretRef "name") (hasKey .Values.global.coreServices.databases.mongodb.connectionStringSecretRef "key") }}
+    {{- $dbConn = dict "name" "DB_CONNECTION_STRING" "valueFrom" (dict "secretKeyRef" (dict "name" .Values.global.coreServices.databases.mongodb.connectionStringSecretRef.name "key" .Values.global.coreServices.databases.mongodb.connectionStringSecretRef.key)) }}
+  {{- end }}
   {{- $env := list
     (dict "name" "DATAKEEPER_ORIGIN" "value" "http://datakeeper")
     (dict "name" "SCRAPER_ORIGIN" "value" "http://scraper")
     (dict "name" "IDEALER_ORIGIN" "value" "http://idealer")
-    (dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString)
+    $dbConn
     (dict "name" "JOB_TYPES" "value" (join "," .Values.global.coreServices.jobTypes))
     (dict "name" "LICENSE_KEY" "value" .Values.global.coreServices.license.key)
     (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)

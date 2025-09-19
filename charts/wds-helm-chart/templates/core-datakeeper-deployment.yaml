@@ -1,13 +1,19 @@
 {{- if eq .Values.global.coreServices.mode "MultiService" }}
   {{- $name := "datakeeper" }}
+  {{- $dbConn := dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString }}
+  {{- if and (not .Values.global.coreServices.databases.mongodb.connectionString) (hasKey .Values.global.coreServices.databases.mongodb.connectionStringSecretRef "name") (hasKey .Values.global.coreServices.databases.mongodb.connectionStringSecretRef "key") }}
+    {{- $dbConn = dict "name" "DB_CONNECTION_STRING" "valueFrom" (dict "secretKeyRef" (dict "name" .Values.global.coreServices.databases.mongodb.connectionStringSecretRef.name "key" .Values.global.coreServices.databases.mongodb.connectionStringSecretRef.key)) }}
+  {{- end }}
   {{- $env := list
     (dict "name" "IDEALER_ORIGIN" "value" "http://idealer")
-    (dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString)
+    $dbConn
     (dict "name" "LICENSE_KEY" "value" .Values.global.coreServices.license.key)
     (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
   }}
   {{- if .Values.global.coreServices.cache.connectionString }}
     {{- $env = append $env (dict "name" "CACHE_CONNECTION_STRING" "value" .Values.global.coreServices.cache.connectionString) }}
+  {{- else if and (hasKey .Values.global.coreServices.cache.connectionStringSecretRef "name") (hasKey .Values.global.coreServices.cache.connectionStringSecretRef "key") }}
+    {{- $env = append $env (dict "name" "CACHE_CONNECTION_STRING" "valueFrom" (dict "secretKeyRef" (dict "name" .Values.global.coreServices.cache.connectionStringSecretRef.name "key" .Values.global.coreServices.cache.connectionStringSecretRef.key))) }}
   {{- end }}
 
   {{ include "wds-helm-chart.deployment" (dict

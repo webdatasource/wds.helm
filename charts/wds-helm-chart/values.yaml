@@ -28,15 +28,29 @@ global:
       key: ""
     }
     # Cache configuration (is used only in MultiService mode)
+    # If both connectionString and connectionStringSecretRef are set, connectionString is used.
     cache:
       # Cache connection string. If not set, the MongoDB will be used as a cache
       connectionString: ""
+      # Reference to a Kubernetes secret that contains the cache connection string.
+      # {
+      #   name: "my-secret"
+      #   key: "connection-string"
+      # }
+      connectionStringSecretRef: {}
     # Database configuration
     databases:
       # MongoDB
+      # If both connectionString and connectionStringSecretRef are set, connectionString is used.
       mongodb:
         # MongoDB connection string
         connectionString: ""
+        # Reference to a Kubernetes secret that contains the MongoDB connection string.
+        # {
+        #   name: "my-secret"
+        #   key: "connection-string"
+        # }
+        connectionStringSecretRef: {}
     # Available job types
     jobTypes: 
     - intranet # Crawl data from intranet sources with no limits
@@ -257,10 +271,9 @@ auxiliaryServices:
     # Override global.affinity for this service
     affinityOverride: {}
     hpa: {}
-    pdb: {
-      # Enable if replicaCount > 1
-      enabled: false
-    }
+    pdb:
+      enabled: false # Enable if replicaCount > 1
+    
   docs:
     # Number of pod replicas
     replicaCount: 1
@@ -284,7 +297,6 @@ auxiliaryServices:
     # Override global.affinity for this service
     affinityOverride: {}
     hpa: {}
-    pdb: {
-      # Enable if replicaCount > 1
-      enabled: false
-    }
+    pdb: 
+      enabled: false # Enable if replicaCount > 1
+    

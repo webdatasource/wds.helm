@@ -1,21 +1,14 @@
 {{- if eq .Values.global.coreServices.mode "MultiService" }}
   {{- $name := "idealer" }}
-  {{- $global := (default (dict) .Values.global.hpa) }}
-  {{- $service := (default (dict) .Values.coreServices.idealer.hpa) }}
-  {{- $serviceHasEnabled := hasKey $service "enabled" }}
-  {{- $enabled := ternary ($service.enabled) ($global.enabled) $serviceHasEnabled }}
-  {{- if $enabled }}
-    {{- $min := (default $global.minReplicas $service.minReplicas) }}
-    {{- $max := (default $global.maxReplicas $service.maxReplicas) }}
-    {{- $cpu := (default $global.targetCPUUtilizationPercentage $service.targetCPUUtilizationPercentage) }}
-    {{- $mem := (default $global.targetMemoryUtilizationPercentage $service.targetMemoryUtilizationPercentage) }}
+  {{- $params := include "dictAddMissing" (list .Values.coreServices.idealer.hpa .Values.global.hpa) | fromYaml -}}
+  {{- if $params.enabled }}
     {{ include "wds-helm-chart.hpa" (dict
         "ctx" .
         "name" $name
-        "minReplicas" $min
-        "maxReplicas" $max
-        "cpu" $cpu
-        "memory" $mem
+        "minReplicas" $params.minReplicas
+        "maxReplicas" $params.maxReplicas
+        "cpu" $params.targetCPUUtilizationPercentage
+        "memory" $params.targetMemoryUtilizationPercentage
       ) }}
   {{- end }}
 {{- end }}

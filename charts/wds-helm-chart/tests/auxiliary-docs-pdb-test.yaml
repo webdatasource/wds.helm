@@ -5,15 +5,18 @@ tests:
   - it: should not render when docs disabled
     set:
       global.auxiliaryServices.docs.enabled: false
-      global.pdb.enabled: true
     asserts:
       - hasDocuments:
           count: 0
 
-  - it: should render PDB when enabled globally
+  - it: should not render docs PDB by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render PDB when enabled for the service
     set:
-      global.auxiliaryServices.docs.enabled: true
-      global.pdb.enabled: true
+      auxiliaryServices.docs.pdb.enabled: true
     asserts:
       - hasDocuments:
           count: 1
@@ -23,19 +26,10 @@ tests:
           path: spec.minAvailable
           value: 1
 
-  - it: should not render PDB when disable for the service
-    set:
-      global.auxiliaryServices.docs.enabled: true
-      global.pdb.enabled: true
-      auxiliaryServices.docs.pdb.enabled: false
-    asserts:
-      - hasDocuments:
-          count: 0
 
   - it: should allow service-level PDB override values
     set:
-      global.auxiliaryServices.docs.enabled: true
-      global.pdb.enabled: true
+      auxiliaryServices.docs.pdb.enabled: true
       auxiliaryServices.docs.pdb.minAvailable: 2
       auxiliaryServices.docs.pdb.maxUnavailable: 1
     asserts:
@@ -48,4 +42,3 @@ tests:
           value: 2
       - notExists:
           path: spec.maxUnavailable
-

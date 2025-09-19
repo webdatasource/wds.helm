@@ -5,7 +5,6 @@ tests:
   - it: should not render when mode != MultiService
     set:
       global.coreServices.mode: SingleService
-      global.pdb.enabled: true
     asserts:
       - hasDocuments:
           count: 0
@@ -13,7 +12,6 @@ tests:
   - it: should render PDB when enabled globally
     set:
       global.coreServices.mode: MultiService
-      global.pdb.enabled: true
     asserts:
       - hasDocuments:
           count: 1
@@ -26,7 +24,6 @@ tests:
   - it: should not render PDB when disable for the service
     set:
       global.coreServices.mode: MultiService
-      global.pdb.enabled: true
       coreServices.datakeeper.pdb.enabled: false
     asserts:
       - hasDocuments:
@@ -35,7 +32,6 @@ tests:
   - it: should allow service-level PDB override values
     set:
       global.coreServices.mode: MultiService
-      global.pdb.enabled: true
       coreServices.datakeeper.pdb.minAvailable: 2
       coreServices.datakeeper.pdb.maxUnavailable: 1
     asserts:
@@ -48,4 +44,3 @@ tests:
           value: 2
       - notExists:
           path: spec.maxUnavailable
-

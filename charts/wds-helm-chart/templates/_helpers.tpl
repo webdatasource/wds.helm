@@ -34,3 +34,21 @@ Usage: {{ include "wds-helm-chart.validateIngressBasePath" . }} (produces no out
 {{- fail (printf "global.ingress.basePath must be '/' or end with '/'. Current value: '%s'" $val) -}}
 {{- end -}}
 {{- end -}}
+
+
+{{/*
+  dictAddMissing: shallow merge that only adds keys from src into dst
+  without overwriting existing ones.
+  Usage:
+    {{- include "dictAddMissing" (list $dst $src) | fromYaml -}}
+*/}}
+{{- define "dictAddMissing" -}}
+{{- $dst := deepCopy (index . 0) -}}
+{{- $src := index . 1 -}}
+{{- range $k, $v := $src }}
+  {{- if not (hasKey $dst $k) }}
+    {{- $_ := set $dst $k $v -}}
+  {{- end }}
+{{- end }}
+{{- toYaml $dst -}}
+{{- end }}

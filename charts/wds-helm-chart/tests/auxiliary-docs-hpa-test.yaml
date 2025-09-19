@@ -5,14 +5,12 @@ tests:
   - it: should not render when docs disabled
     set:
       global.auxiliaryServices.docs.enabled: false
-      global.hpa.enabled: true
     asserts:
       - hasDocuments:
           count: 0
 
   - it: should not render when HPA disabled
     set:
-      global.auxiliaryServices.docs.enabled: true
       global.hpa.enabled: false
     asserts:
       - hasDocuments:
@@ -20,17 +18,12 @@ tests:
 
   - it: should not render PDB when disable for the service
     set:
-      global.auxiliaryServices.docs.enabled: true
-      global.hpa.enabled: true
       auxiliaryServices.docs.hpa.enabled: false
     asserts:
       - hasDocuments:
           count: 0
 
   - it: should render with defaults
-    set:
-      global.auxiliaryServices.docs.enabled: true
-      global.hpa.enabled: true
     asserts:
       - hasDocuments:
           count: 1
@@ -51,8 +44,6 @@ tests:
 
   - it: should allow service-level HPA override values
     set:
-      global.auxiliaryServices.docs.enabled: true
-      global.hpa.enabled: true
       auxiliaryServices.docs.hpa.minReplicas: 2
       auxiliaryServices.docs.hpa.maxReplicas: 5
       auxiliaryServices.docs.hpa.targetCPUUtilizationPercentage: 70

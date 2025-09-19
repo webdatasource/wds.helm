@@ -13,6 +13,8 @@ tests:
   - it: should render when mode = MultiService
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
     asserts:
       - isKind:
           of: Deployment
@@ -20,6 +22,8 @@ tests:
   - it: should set image correctly
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
       global.registry: test.registry
       coreServices.dapi.image.tag: latest
     asserts:
@@ -30,6 +34,8 @@ tests:
   - it: should render with defaults
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
     asserts:
       - isKind:
           of: Deployment
@@ -80,30 +86,42 @@ tests:
           value: http://idealer
       - equal:
           path: spec.template.spec.containers[0].env[3].name
-          value: DB_CONNECTION_STRING
-      - equal:
-          path: spec.template.spec.containers[0].env[4].name
           value: JOB_TYPES
       - equal:
-          path: spec.template.spec.containers[0].env[4].value
+          path: spec.template.spec.containers[0].env[3].value
           value: intranet,internet
       - equal:
-          path: spec.template.spec.containers[0].env[5].name
-          value: LICENSE_KEY
-      - equal:
-          path: spec.template.spec.containers[0].env[6].name
+          path: spec.template.spec.containers[0].env[4].name
           value: MIN_LOG_LEVEL
       - equal:
-          path: spec.template.spec.containers[0].env[6].value
+          path: spec.template.spec.containers[0].env[4].value
           value: Information
       - equal:
-          path: spec.template.spec.containers[0].env[7].name
+          path: spec.template.spec.containers[0].env[5].name
           value: BASE_PATH
       - equal:
-          path: spec.template.spec.containers[0].env[7].value
+          path: spec.template.spec.containers[0].env[5].value
           value: /
+      - equal:
+          path: spec.template.spec.containers[0].env[6].name
+          value: LICENSE_KEY
+      - equal:
+          path: spec.template.spec.containers[0].env[6].value
+          value: test
+      - equal:
+          path: spec.template.spec.containers[0].env[7].name
+          value: MONGODB_CONNECTION_STRING
+      - equal:
+          path: spec.template.spec.containers[0].env[7].value
+          value: testConnectionString
+      - equal:
+          path: spec.template.spec.containers[0].env[8].name
+          value: MONGODB_DATABASE_NAME
+      - equal:
+          path: spec.template.spec.containers[0].env[8].value
+          value: WebDataSource
       - notExists:
-          path: spec.template.spec.containers[0].env[8]
+          path: spec.template.spec.containers[0].env[9]
       - notExists:
           path: spec.template.spec.nodeSelector
       - notExists:
@@ -114,53 +132,80 @@ tests:
   - it: should respect exceptionResponseDelayMs
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
       global.coreServices.exceptionResponseDelayMs: 10
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[8].name
+          path: spec.template.spec.containers[0].env[9].name
           value: GLOBAL_EXCEPTION_RESPONSE_DELAY_MS
       - equal:
-          path: spec.template.spec.containers[0].env[8].value
+          path: spec.template.spec.containers[0].env[9].value
           value: "10"
+
+  - it: should support license.keyRef
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: ""
+      global.coreServices.license.keyRef:
+        name: license-secret
+        key: license-key
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].env[6].name
+          value: LICENSE_KEY
+      - equal:
+          path: spec.template.spec.containers[0].env[6].valueFrom.secretKeyRef.name
+          value: license-secret
+      - equal:
+          path: spec.template.spec.containers[0].env[6].valueFrom.secretKeyRef.key
+          value: license-key
 
   - it: should support mongodb.connectionStringSecretRef
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
       global.coreServices.databases.mongodb.connectionString: ""
       global.coreServices.databases.mongodb.connectionStringSecretRef:
         name: mongo-secret
         key: conn
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[3].name
-          value: DB_CONNECTION_STRING
+          path: spec.template.spec.containers[0].env[7].name
+          value: MONGODB_CONNECTION_STRING
       - equal:
-          path: spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.name
+          path: spec.template.spec.containers[0].env[7].valueFrom.secretKeyRef.name
           value: mongo-secret
       - equal:
-          path: spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.key
+          path: spec.template.spec.containers[0].env[7].valueFrom.secretKeyRef.key
           value: conn
 
   - it: should prefer mongodb.connectionString over secretRef when both set
     set:
       global.coreServices.mode: MultiService
-      global.coreServices.databases.mongodb.connectionString: literal-mongo
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
       global.coreServices.databases.mongodb.connectionStringSecretRef:
         name: mongo-secret
         key: conn
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[3].name
-          value: DB_CONNECTION_STRING
+          path: spec.template.spec.containers[0].env[7].name
+          value: MONGODB_CONNECTION_STRING
       - equal:
-          path: spec.template.spec.containers[0].env[3].value
-          value: literal-mongo
+          path: spec.template.spec.containers[0].env[7].value
+          value: testConnectionString
       - notExists:
-          path: spec.template.spec.containers[0].env[3].valueFrom
+          path: spec.template.spec.containers[0].env[7].valueFrom
 
   - it: should respect replicaCount override
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
       coreServices.dapi.replicaCount: 3
     asserts:
       - equal:
@@ -170,6 +215,8 @@ tests:
   - it: should render image without registry when global.registry empty
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
       global.registry: ""
     asserts:
     - matchRegex:
@@ -179,6 +226,8 @@ tests:
   - it: should render image with overrides (registry, name, tag, pullPolicy)
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
       global.registry: custom.registry
       coreServices.dapi.image.name: org/custom-dapi
       coreServices.dapi.image.tag: v9
@@ -194,6 +243,8 @@ tests:
   - it: should merge global and service deploymentExtraLabels
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
       global.deploymentExtraLabels:
         globalLabel: g
         common: global
@@ -214,6 +265,8 @@ tests:
   - it: should apply global nodeSelector
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
       global.nodeSelector:
         disktype: ssd
     asserts:
@@ -224,6 +277,8 @@ tests:
   - it: should allow nodeSelector override per service
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
       global.nodeSelector:
         disktype: ssd
       coreServices.dapi.nodeSelectorOverride:
@@ -236,6 +291,8 @@ tests:
   - it: should apply global tolerations
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
       global.tolerations:
         - key: dedicated
           operator: Equal
@@ -258,6 +315,8 @@ tests:
   - it: should allow tolerations override per service
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
       global.tolerations:
         - key: dedicated
           operator: Equal
@@ -281,6 +340,8 @@ tests:
   - it: should apply global affinity
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
       global.affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -301,6 +362,8 @@ tests:
   - it: should allow affinity override per service
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
       global.affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -332,8 +395,10 @@ tests:
   - it: should respect ingress.basePath
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
       global.ingress.basePath: /test/
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[7].value
+          path: spec.template.spec.containers[0].env[5].value
           value: /test/

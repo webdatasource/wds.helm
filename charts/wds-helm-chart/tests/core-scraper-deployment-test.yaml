@@ -13,6 +13,7 @@ tests:
   - it: should render when mode = MultiService
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
     asserts:
       - isKind:
           of: Deployment
@@ -20,6 +21,7 @@ tests:
   - it: should render with defaults
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
     asserts:
       - isKind:
           of: Deployment
@@ -52,13 +54,16 @@ tests:
           value: 8080
       - equal:
           path: spec.template.spec.containers[0].env[0].name
-          value: LICENSE_KEY
-      - equal:
-          path: spec.template.spec.containers[0].env[1].name
           value: MIN_LOG_LEVEL
       - equal:
-          path: spec.template.spec.containers[0].env[1].value
+          path: spec.template.spec.containers[0].env[0].value
           value: Information
+      - equal:
+          path: spec.template.spec.containers[0].env[1].name
+          value: LICENSE_KEY
+      - equal:
+          path: spec.template.spec.containers[0].env[1].value
+          value: test
       - notExists:
           path: spec.template.spec.nodeSelector
       - notExists:
@@ -69,6 +74,7 @@ tests:
   - it: should render image without registry when global.registry empty
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
       global.registry: ""
     asserts:
     - matchRegex:
@@ -78,6 +84,7 @@ tests:
   - it: should render image with overrides (registry, name, tag, pullPolicy)
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
       global.registry: custom.registry
       coreServices.scraper.image.name: org/custom-scraper
       coreServices.scraper.image.tag: v9
@@ -90,9 +97,30 @@ tests:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: Always
 
+  - it: should support license.keyRef
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: ""
+      global.coreServices.license.keyRef:
+        name: license-secret
+        key: license-key
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].env[1].name
+          value: LICENSE_KEY
+      - equal:
+          path: spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.name
+          value: license-secret
+      - equal:
+          path: spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.key
+          value: license-key
+
   - it: should respect replicaCount override
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
       coreServices.scraper.replicaCount: 3
     asserts:
       - equal:
@@ -102,6 +130,7 @@ tests:
   - it: should merge global and service deploymentExtraLabels
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
       global.deploymentExtraLabels:
         globalLabel: g
         common: global
@@ -122,6 +151,7 @@ tests:
   - it: should apply global nodeSelector
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
       global.nodeSelector:
         disktype: ssd
     asserts:
@@ -132,6 +162,7 @@ tests:
   - it: should allow nodeSelector override per service
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
       global.nodeSelector:
         disktype: ssd
       coreServices.scraper.nodeSelectorOverride:
@@ -144,6 +175,7 @@ tests:
   - it: should apply global tolerations
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
       global.tolerations:
         - key: dedicated
           operator: Equal
@@ -166,6 +198,7 @@ tests:
   - it: should allow tolerations override per service
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
       global.tolerations:
         - key: dedicated
           operator: Equal
@@ -189,6 +222,7 @@ tests:
   - it: should apply global affinity
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
       global.affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -209,6 +243,7 @@ tests:
   - it: should allow affinity override per service
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
       global.affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

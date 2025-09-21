@@ -13,6 +13,7 @@ tests:
   - it: should render when mode = SingleService
     set:
       global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
     asserts:
       - isKind:
           of: Deployment
@@ -20,6 +21,7 @@ tests:
   - it: should render with defaults
     set:
       global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
     asserts:
       - isKind:
           of: Deployment
@@ -52,27 +54,34 @@ tests:
           value: 8080
       - equal:
           path: spec.template.spec.containers[0].env[0].name
-          value: DB_CONNECTION_STRING
-      - equal:
-          path: spec.template.spec.containers[0].env[1].name
           value: JOB_TYPES
       - equal:
-          path: spec.template.spec.containers[0].env[2].name
+          path: spec.template.spec.containers[0].env[1].name
           value: EXTERNAL_IP_ADDRESS_CONFIGS
       - equal:
-          path: spec.template.spec.containers[0].env[3].name
+          path: spec.template.spec.containers[0].env[2].name
           value: MIN_LOG_LEVEL
       - equal:
-          path: spec.template.spec.containers[0].env[3].value
+          path: spec.template.spec.containers[0].env[2].value
           value: Information
       - equal:
-          path: spec.template.spec.containers[0].env[4].name
+          path: spec.template.spec.containers[0].env[3].name
           value: BASE_PATH
       - equal:
-          path: spec.template.spec.containers[0].env[4].value
+          path: spec.template.spec.containers[0].env[3].value
           value: /
-      - notExists:
-          path: spec.template.spec.containers[0].env[5]
+      - equal:
+          path: spec.template.spec.containers[0].env[4].name
+          value: MONGODB_CONNECTION_STRING
+      - equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: test
+      - equal:
+          path: spec.template.spec.containers[0].env[5].name
+          value: MONGODB_DATABASE_NAME
+      - equal:
+          path: spec.template.spec.containers[0].env[5].value
+          value: WebDataSource
       - notExists:
           path: spec.template.spec.nodeSelector
       - notExists:
@@ -83,18 +92,55 @@ tests:
   - it: should respect exceptionResponseDelayMs
     set:
       global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
       global.coreServices.exceptionResponseDelayMs: 10
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[5].name
+          path: spec.template.spec.containers[0].env[6].name
           value: GLOBAL_EXCEPTION_RESPONSE_DELAY_MS
       - equal:
-          path: spec.template.spec.containers[0].env[5].value
+          path: spec.template.spec.containers[0].env[6].value
           value: "10"
+
+  - it: should support mongodb.connectionStringSecretRef
+    set:
+      global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: ""
+      global.coreServices.databases.mongodb.connectionStringSecretRef:
+        name: mongo-secret
+        key: conn
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[4].name
+          value: MONGODB_CONNECTION_STRING
+      - equal:
+          path: spec.template.spec.containers[0].env[4].valueFrom.secretKeyRef.name
+          value: mongo-secret
+      - equal:
+          path: spec.template.spec.containers[0].env[4].valueFrom.secretKeyRef.key
+          value: conn
+
+  - it: should prefer mongodb.connectionString over secretRef when both set
+    set:
+      global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: literal-mongo
+      global.coreServices.databases.mongodb.connectionStringSecretRef:
+        name: mongo-secret
+        key: conn
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[4].name
+          value: MONGODB_CONNECTION_STRING
+      - equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: literal-mongo
+      - notExists:
+          path: spec.template.spec.containers[0].env[4].valueFrom
 
   - it: should render image without registry when global.registry empty
     set:
       global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
       global.registry: ""
     asserts:
     - matchRegex:
@@ -104,6 +150,7 @@ tests:
   - it: should render image with overrides (registry, name, tag, pullPolicy)
     set:
       global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
       global.registry: custom.registry
       coreServices.solidstack.image.name: org/custom-solidstack
       coreServices.solidstack.image.tag: v9
@@ -119,6 +166,7 @@ tests:
   - it: should not respect replicaCount override
     set:
       global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
       coreServices.solidstack.replicaCount: 3
     asserts:
       - equal:
@@ -128,6 +176,7 @@ tests:
   - it: should merge global and service deploymentExtraLabels
     set:
       global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
       global.deploymentExtraLabels:
         globalLabel: g
         common: global
@@ -148,6 +197,7 @@ tests:
   - it: should apply global nodeSelector
     set:
       global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
       global.nodeSelector:
         disktype: ssd
     asserts:
@@ -158,6 +208,7 @@ tests:
   - it: should allow nodeSelector override per service
     set:
       global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
       global.nodeSelector:
         disktype: ssd
       coreServices.solidstack.nodeSelectorOverride:
@@ -170,6 +221,7 @@ tests:
   - it: should apply global tolerations
     set:
       global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
       global.tolerations:
         - key: dedicated
           operator: Equal
@@ -192,6 +244,7 @@ tests:
   - it: should allow tolerations override per service
     set:
       global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
       global.tolerations:
         - key: dedicated
           operator: Equal
@@ -215,15 +268,16 @@ tests:
   - it: should apply global affinity
     set:
       global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
       global.affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - key: disktype
-                    operator: In
-                    values:
-                      - ssd
+                - key: disktype
+                  operator: In
+                  values:
+                    - ssd
     asserts:
       - equal:
           path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
@@ -235,15 +289,16 @@ tests:
   - it: should allow affinity override per service
     set:
       global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
       global.affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - key: disktype
-                    operator: In
-                    values:
-                      - ssd
+                - key: disktype
+                  operator: In
+                  values:
+                    - ssd
       coreServices.solidstack.affinityOverride:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -266,8 +321,9 @@ tests:
   - it: should respect ingress.basePath
     set:
       global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
       global.ingress.basePath: /test/
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[4].value
+          path: spec.template.spec.containers[0].env[3].value
           value: /test/

@@ -5,28 +5,17 @@ tests:
   - it: should not render when playground disabled
     set:
       global.auxiliaryServices.playground.enabled: false
-      global.pdb.enabled: true
     asserts:
       - hasDocuments:
           count: 0
 
-  - it: should render PDB when enabled globally
-    set:
-      global.auxiliaryServices.playground.enabled: true
-      global.pdb.enabled: true
+  - it: should not render playground PDB by default
     asserts:
       - hasDocuments:
-          count: 1
-      - isKind:
-          of: PodDisruptionBudget
-      - equal:
-          path: spec.minAvailable
-          value: 1
+          count: 0
 
   - it: should not render PDB when disable for the service
     set:
-      global.auxiliaryServices.playground.enabled: true
-      global.pdb.enabled: true
       auxiliaryServices.playground.pdb.enabled: false
     asserts:
       - hasDocuments:
@@ -34,8 +23,7 @@ tests:
 
   - it: should allow service-level PDB override values
     set:
-      global.auxiliaryServices.playground.enabled: true
-      global.pdb.enabled: true
+      auxiliaryServices.playground.pdb.enabled: true
       auxiliaryServices.playground.pdb.minAvailable: 2
       auxiliaryServices.playground.pdb.maxUnavailable: 1
     asserts:
@@ -48,4 +36,3 @@ tests:
           value: 2
       - notExists:
           path: spec.maxUnavailable
-

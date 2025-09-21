@@ -23,20 +23,40 @@ global:
     # SingleService: only solidstack is deployed together with its service
     # MultiService: all core services are deployed (dapi, datakeeper, crawler, scraper, idealer) together with their services
     mode: SingleService
-    # License key to run application in the MultiService mode
-    license: {
+    # License key to run application in the MultiService mode (use for a vault reference. For instance, https://github.com/bank-vaults/vault-secrets-webhook)
+    license:
       key: ""
-    }
+      # Reference to a Kubernetes secret that contains a license key.
+      # keyRef:
+      #   name: my-secret
+      #   key: license-key
+      keyRef: {}
     # Cache configuration (is used only in MultiService mode)
+    # If both connectionString and connectionStringSecretRef are set, connectionString is used.
     cache:
-      # Cache connection string. If not set, the MongoDB will be used as a cache
+      # Cache connection string. If not set, the MongoDB will be used as a cache (use for a vault reference. For instance, https://github.com/bank-vaults/vault-secrets-webhook)
       connectionString: ""
+      # Reference to a Kubernetes secret that contains the cache connection string.
+      # connectionStringSecretRef:
+      #   name: my-secret
+      #   key: connection-string
+      connectionStringSecretRef: {}
+      # Database name if a DB is used for caching. If not set, a database name from the connection string will be used.
+      databaseName: "" 
     # Database configuration
     databases:
       # MongoDB
+      # If both connectionString and connectionStringSecretRef are set, connectionString is used.
       mongodb:
-        # MongoDB connection string
+        # MongoDB connection string (use for a vault reference. For instance, https://github.com/bank-vaults/vault-secrets-webhook)
         connectionString: ""
+        # Reference to a Kubernetes secret that contains the MongoDB connection string.
+        # connectionStringSecretRef:
+        #   name: my-secret
+        #   key: connection-string
+        connectionStringSecretRef: {}
+        # MongoDB database name. If not set, a database name from the connection string will be used.
+        databaseName: "WebDataSource" 
     # Available job types
     jobTypes: 
     - intranet # Crawl data from intranet sources with no limits
@@ -73,6 +93,7 @@ global:
     # - MCP: http://your-domain/wds/mcp
     # - Docs: http://your-domain/wds/docs
     # - Playground: http://your-domain/wds/playground
+    # - etc.
     basePath: "/"
   # Global Horizontal Pod Autoscaler defaults (can be overridden per service under <service>.hpa)
   hpa:
@@ -123,6 +144,10 @@ coreServices:
       tag: ""
       # Image pull policy (default: IfNotPresent)
       pullPolicy: ""
+    # Override global.config.coreServices.databases.mongodb.databaseName for this service
+    databases:
+      mongodb:
+        databaseName: ""
     # Override global.resources for this service
     resourcesOverride: {}
     # Override global.deploymentExtraLabels 
@@ -147,6 +172,10 @@ coreServices:
       tag: ""
       # Image pull policy (default: IfNotPresent)
       pullPolicy: ""
+    # Override global.config.coreServices.databases.mongodb.databaseName for this service
+    databases:
+      mongodb:
+        databaseName: ""
     # Override global.resources for this service
     resourcesOverride: {}
     # Override global.deploymentExtraLabels 
@@ -219,6 +248,10 @@ coreServices:
       tag: ""
       # Image pull policy (default: IfNotPresent)
       pullPolicy: ""
+    # Override global.config.coreServices.databases.mongodb.databaseName for this service
+    databases:
+      mongodb:
+        databaseName: ""
     # Override global.resources for this service
     resourcesOverride: {}
     # Override global.deploymentExtraLabels 
@@ -257,10 +290,9 @@ auxiliaryServices:
     # Override global.affinity for this service
     affinityOverride: {}
     hpa: {}
-    pdb: {
-      # Enable if replicaCount > 1
-      enabled: false
-    }
+    pdb:
+      enabled: false # Enable if replicaCount > 1
+    
   docs:
     # Number of pod replicas
     replicaCount: 1
@@ -284,7 +316,6 @@ auxiliaryServices:
     # Override global.affinity for this service
     affinityOverride: {}
     hpa: {}
-    pdb: {
-      # Enable if replicaCount > 1
-      enabled: false
-    }
+    pdb: 
+      enabled: false # Enable if replicaCount > 1
+    

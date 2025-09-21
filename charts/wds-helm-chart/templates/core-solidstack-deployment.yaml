@@ -1,16 +1,28 @@
 {{- if eq .Values.global.coreServices.mode "SingleService" }}
   {{- $env := list
-    (dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString)
     (dict "name" "JOB_TYPES" "value" (join "," .Values.global.coreServices.jobTypes))
     (dict "name" "EXTERNAL_IP_ADDRESS_CONFIGS" "value" (join "," .Values.global.coreServices.externalIpConfigs))
     (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
     (dict "name" "BASE_PATH" "value" .Values.global.ingress.basePath)
   }}
+
+  {{- if .Values.global.coreServices.databases.mongodb.connectionString }}
+    {{- $env = append $env (dict "name" "MONGODB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString ) }}
+  {{- else if .Values.global.coreServices.databases.mongodb.connectionStringSecretRef }}
+    {{- $env = append $env (dict "name" "MONGODB_CONNECTION_STRING" "valueFrom" (dict "secretKeyRef" (dict "name" .Values.global.coreServices.databases.mongodb.connectionStringSecretRef.name "key" .Values.global.coreServices.databases.mongodb.connectionStringSecretRef.key))) }}
+  {{- else }}
+    {{- fail "Either coreServices.databases.mongodb.connectionString or coreServices.databases.mongodb.connectionStringSecretRef must be set when coreServices.mode is MultiService" }}
+  {{- end }}
+
+  {{- if .Values.global.coreServices.databases.mongodb.databaseName }}
+    {{- $env = append $env (dict "name" "MONGODB_DATABASE_NAME" "value" .Values.global.coreServices.databases.mongodb.databaseName) }}
+  {{- end }}
+
   {{- if .Values.global.coreServices.exceptionResponseDelayMs }}
     {{- $env = append $env (dict "name" "GLOBAL_EXCEPTION_RESPONSE_DELAY_MS" "value" .Values.global.coreServices.exceptionResponseDelayMs) }}
   {{- end }}
 
-  {{ include "wds-helm-chart.deployment" (dict
+{{ include "wds-helm-chart.deployment" (dict
     "ctx" .
     "name" "solidstack"
     "labels" (merge (default (dict) .Values.coreServices.solidstack.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels))

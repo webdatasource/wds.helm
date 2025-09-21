@@ -2,15 +2,40 @@
   {{- $name := "datakeeper" }}
   {{- $env := list
     (dict "name" "IDEALER_ORIGIN" "value" "http://idealer")
-    (dict "name" "DB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString)
-    (dict "name" "LICENSE_KEY" "value" .Values.global.coreServices.license.key)
     (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
   }}
-  {{- if .Values.global.coreServices.cache.connectionString }}
-    {{- $env = append $env (dict "name" "CACHE_CONNECTION_STRING" "value" .Values.global.coreServices.cache.connectionString) }}
+
+  {{- if .Values.global.coreServices.license.key }}
+    {{- $env = append $env (dict "name" "LICENSE_KEY" "value" .Values.global.coreServices.license.key) }}
+  {{- else if .Values.global.coreServices.license.keyRef }}
+    {{- $env = append $env (dict "name" "LICENSE_KEY" "valueFrom" (dict "secretKeyRef" (dict "name" .Values.global.coreServices.license.keyRef.name "key" .Values.global.coreServices.license.keyRef.key))) }}
+  {{- else }}
+    {{- fail "Either coreServices.license.key or coreServices.license.keyRef must be set when coreServices.mode is MultiService" }}
   {{- end }}
 
-  {{ include "wds-helm-chart.deployment" (dict
+  {{- if .Values.global.coreServices.databases.mongodb.connectionString }}
+    {{- $env = append $env (dict "name" "MONGODB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString ) }}
+  {{- else if .Values.global.coreServices.databases.mongodb.connectionStringSecretRef }}
+    {{- $env = append $env (dict "name" "MONGODB_CONNECTION_STRING" "valueFrom" (dict "secretKeyRef" (dict "name" .Values.global.coreServices.databases.mongodb.connectionStringSecretRef.name "key" .Values.global.coreServices.databases.mongodb.connectionStringSecretRef.key))) }}
+  {{- else }}
+    {{- fail "Either coreServices.databases.mongodb.connectionString or coreServices.databases.mongodb.connectionStringSecretRef must be set when coreServices.mode is MultiService" }}
+  {{- end }}
+
+  {{- if .Values.global.coreServices.databases.mongodb.databaseName }}
+    {{- $env = append $env (dict "name" "MONGODB_DATABASE_NAME" "value" (.Values.coreServices.datakeeper.databases.mongodb.databaseName | default .Values.global.coreServices.databases.mongodb.databaseName)) }}
+  {{- end }}
+
+  {{- if .Values.global.coreServices.cache.connectionString }}
+    {{- $env = append $env (dict "name" "CACHE_CONNECTION_STRING" "value" .Values.global.coreServices.cache.connectionString) }}
+  {{- else if and (hasKey .Values.global.coreServices.cache.connectionStringSecretRef "name") (hasKey .Values.global.coreServices.cache.connectionStringSecretRef "key") }}
+    {{- $env = append $env (dict "name" "CACHE_CONNECTION_STRING" "valueFrom" (dict "secretKeyRef" (dict "name" .Values.global.coreServices.cache.connectionStringSecretRef.name "key" .Values.global.coreServices.cache.connectionStringSecretRef.key))) }}
+  {{- end }}
+
+  {{- if .Values.global.coreServices.cache.databaseName }}
+    {{- $env = append $env (dict "name" "CACHE_DATABASE_NAME" "value" .Values.global.coreServices.cache.databaseName) }}
+  {{- end }}
+
+{{ include "wds-helm-chart.deployment" (dict
     "ctx" .
     "name" $name
     "labels" (merge (default (dict) .Values.coreServices.datakeeper.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels))

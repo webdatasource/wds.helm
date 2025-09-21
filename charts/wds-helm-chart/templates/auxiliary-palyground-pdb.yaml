@@ -1,17 +1,12 @@
 {{- if .Values.global.auxiliaryServices.playground.enabled }}
   {{- $name := "playground" }}
-  {{- $global := (default (dict) .Values.global.pdb) }}
-  {{- $service := (default (dict) .Values.auxiliaryServices.playground.pdb) }}
-  {{- $serviceHasEnabled := hasKey $service "enabled" }}
-  {{- $enabled := ternary ($service.enabled) ($global.enabled) $serviceHasEnabled }}
-  {{- if $enabled }}
-    {{- $min := (default $global.minAvailable $service.minAvailable) }}
-    {{- $max := (default $global.maxUnavailable $service.maxUnavailable) }}
+  {{- $params := include "dictAddMissing" (list .Values.auxiliaryServices.playground.pdb .Values.global.pdb) | fromYaml -}}
+  {{- if $params.enabled }}
     {{ include "wds-helm-chart.pdb" (dict
         "ctx" .
         "name" $name
-        "minAvailable" $min
-        "maxUnavailable" $max
+        "minAvailable" $params.minAvailable
+        "maxUnavailable" $params.maxUnavailable
       ) }}
   {{- end }}
 {{- end }}

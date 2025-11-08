@@ -143,11 +143,31 @@ tests:
           path: spec.template.spec.containers[0].env[9].value
           value: "10"
 
-  - it: should support license.keyRef
+  - it: should include retrieval envs when search enabled
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: testConnectionString
+      global.coreServices.search.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[9].name
+          value: FEATURE_FLAG_RETRIEVAL_ENABLED
+      - equal:
+          path: spec.template.spec.containers[0].env[9].value
+          value: "true"
+      - equal:
+          path: spec.template.spec.containers[0].env[10].name
+          value: RETRIEVER_ORIGIN
+      - equal:
+          path: spec.template.spec.containers[0].env[10].value
+          value: http://retriever
+
+  - it: should support license.keySecretRef
     set:
       global.coreServices.mode: MultiService
       global.coreServices.license.key: ""
-      global.coreServices.license.keyRef:
+      global.coreServices.license.keySecretRef:
         name: license-secret
         key: license-key
       global.coreServices.databases.mongodb.connectionString: testConnectionString

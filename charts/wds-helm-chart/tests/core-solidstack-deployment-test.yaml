@@ -102,6 +102,86 @@ tests:
           path: spec.template.spec.containers[0].env[6].value
           value: "10"
 
+  - it: should include embedding env vars and retrieval flag (secret refs)
+    set:
+      global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.search.enabled: true
+      global.coreServices.search.embeddingService.urlSecretRef.name: embed-secret
+      global.coreServices.search.embeddingService.urlSecretRef.key: url
+      global.coreServices.search.embeddingService.apiKeySecretRef.name: embed-secret
+      global.coreServices.search.embeddingService.apiKeySecretRef.key: apiKey
+      global.coreServices.search.embeddingService.requestTemplate: "{ 'model': 'embeddinggemma', 'input': null }"
+      global.coreServices.search.embeddingService.contentJsonPath: "$.input"
+      global.coreServices.search.embeddingService.resultJsonPath: "$.embeddings"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[6].name
+          value: FEATURE_FLAG_RETRIEVAL_ENABLED
+      - equal:
+          path: spec.template.spec.containers[0].env[6].value
+          value: "true"
+      - equal:
+          path: spec.template.spec.containers[0].env[7].name
+          value: EMBEDDING_SERVICE_URL
+      - equal:
+          path: spec.template.spec.containers[0].env[7].valueFrom.secretKeyRef.name
+          value: embed-secret
+      - equal:
+          path: spec.template.spec.containers[0].env[7].valueFrom.secretKeyRef.key
+          value: url
+      - equal:
+          path: spec.template.spec.containers[0].env[8].name
+          value: EMBEDDING_SERVICE_API_KEY
+      - equal:
+          path: spec.template.spec.containers[0].env[8].valueFrom.secretKeyRef.name
+          value: embed-secret
+      - equal:
+          path: spec.template.spec.containers[0].env[8].valueFrom.secretKeyRef.key
+          value: apiKey
+      - equal:
+          path: spec.template.spec.containers[0].env[9].name
+          value: EMBEDDING_SERVICE_REQUEST_TEMPLATE
+      - equal:
+          path: spec.template.spec.containers[0].env[9].value
+          value: "{ 'model': 'embeddinggemma', 'input': null }"
+      - equal:
+          path: spec.template.spec.containers[0].env[10].name
+          value: EMBEDDING_SERVICE_CONTENT_JSON_PATH
+      - equal:
+          path: spec.template.spec.containers[0].env[10].value
+          value: "$.input"
+      - equal:
+          path: spec.template.spec.containers[0].env[11].name
+          value: EMBEDDING_SERVICE_RESULT_JSON_PATH
+      - equal:
+          path: spec.template.spec.containers[0].env[11].value
+          value: "$.embeddings"
+
+  - it: should not include embedding env vars and retrieval flag when retrieval disabled
+    set:
+      global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.search.enabled: false
+      global.coreServices.search.embeddingService.url: https://embed.example
+      global.coreServices.search.embeddingService.apiKey: secret-key
+      global.coreServices.search.embeddingService.requestTemplate: "{ 'model': 'embeddinggemma', 'input': null }"
+      global.coreServices.search.embeddingService.contentJsonPath: "$.input"
+      global.coreServices.search.embeddingService.resultJsonPath: "$.embeddings"
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].env[6]
+      - notExists:
+          path: spec.template.spec.containers[0].env[7]
+      - notExists:
+          path: spec.template.spec.containers[0].env[8]
+      - notExists:
+          path: spec.template.spec.containers[0].env[9]
+      - notExists:
+          path: spec.template.spec.containers[0].env[10]
+      - notExists:
+          path: spec.template.spec.containers[0].env[11]
+
   - it: should support mongodb.connectionStringSecretRef
     set:
       global.coreServices.mode: SingleService

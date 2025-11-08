@@ -97,11 +97,11 @@ tests:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: Always
 
-  - it: should support license.keyRef
+  - it: should support license.keySecretRef
     set:
       global.coreServices.mode: MultiService
       global.coreServices.license.key: ""
-      global.coreServices.license.keyRef:
+      global.coreServices.license.keySecretRef:
         name: license-secret
         key: license-key
     asserts:

@@ -93,11 +93,11 @@ tests:
       - notExists:
           path: spec.template.spec.containers[0].env[5]
 
-  - it: should support license.keyRef
+  - it: should support license.keySecretRef
     set:
       global.coreServices.mode: MultiService
       global.coreServices.license.key: ""
-      global.coreServices.license.keyRef:
+      global.coreServices.license.keySecretRef:
         name: license-secret
         key: license-key
       global.coreServices.databases.mongodb.connectionString: test

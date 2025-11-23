@@ -27,7 +27,7 @@
         "image" (.Values.coreServices.scraper.image.name | default "webdatasource/scraper")
         "tag" (.Values.coreServices.scraper.image.tag | default .Chart.AppVersion)
         "imagePullPolicy" (.Values.coreServices.scraper.image.pullPolicy | default "IfNotPresent")
-        "ports" (list (dict "name" "grpc-web" "containerPort" 8082))
+        "ports" (list (dict "name" "grpc-web" "containerPort" 8082) (dict "name" "health" "containerPort" 8080))
         "env" $env
       )
     )

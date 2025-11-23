@@ -39,7 +39,7 @@
         "image" (.Values.coreServices.idealer.image.name | default "webdatasource/idealer")
         "tag" (.Values.coreServices.idealer.image.tag | default .Chart.AppVersion)
         "imagePullPolicy" (.Values.coreServices.idealer.image.pullPolicy | default "IfNotPresent")
-        "ports" (list (dict "name" "grpc-web" "containerPort" 8082))
+        "ports" (list (dict "name" "grpc-web" "containerPort" 8082) (dict "name" "health" "containerPort" 8080))
         "env" $env
       )
     )

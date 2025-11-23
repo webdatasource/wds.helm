@@ -53,7 +53,7 @@
         "image" (.Values.coreServices.dapi.image.name | default "webdatasource/dapi")
         "tag" (.Values.coreServices.dapi.image.tag | default .Chart.AppVersion)
         "imagePullPolicy" (.Values.coreServices.dapi.image.pullPolicy | default "IfNotPresent")
-        "ports" (list (dict "name" "http" "containerPort" 8080))
+        "ports" (list (dict "name" "http" "containerPort" 8080) (dict "name" "health" "containerPort" 8080))
         "env" $env
       )
     )

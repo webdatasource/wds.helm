@@ -81,7 +81,7 @@
         "image" (.Values.coreServices.retriever.image.name | default "webdatasource/retriever")
         "tag" (.Values.coreServices.retriever.image.tag | default .Chart.AppVersion)
         "imagePullPolicy" (.Values.coreServices.retriever.image.pullPolicy | default "IfNotPresent")
-        "ports" (list (dict "name" "grpc-web" "containerPort" 8082))
+        "ports" (list (dict "name" "grpc-web" "containerPort" 8082) (dict "name" "health" "containerPort" 8080))
         "env" $env
       )
     )

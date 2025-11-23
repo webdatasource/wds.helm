@@ -4,7 +4,7 @@
     "ctx" . 
     "name" $name 
     "app" "datakeeper"
-    "ports" (list (dict "name" "grpc-web-rm" "port" 8083 "protocol" "TCP" "targetPort" "grpc-web-rm"))
+    "ports" (list (dict "name" "grpc-web-rm" "port" 8083 "protocol" "TCP" "targetPort" "grpc-web-rm") (dict "name" "health" "port" 8080 "protocol" "TCP" "targetPort" "health"))
     "labels" (merge (default (dict) .Values.coreServices.datakeeper.serviceExtraLabelsOverride) (default (dict) .Values.global.serviceExtraLabels))
   ) }}
 {{- end }}

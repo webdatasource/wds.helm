@@ -36,6 +36,15 @@ tests:
           path: spec.ports[0].targetPort
           value: grpc-web
       - equal:
+          path: spec.ports[1].name
+          value: health
+      - equal:
+          path: spec.ports[1].port
+          value: 8080
+      - equal:
+          path: spec.ports[1].targetPort
+          value: health
+      - equal:
           path: metadata.labels.app
           value: retriever
       - equal:
@@ -80,4 +89,3 @@ tests:
       - equal:
           path: spec.selector["app.kubernetes.io/instance"]
           value: RELEASE-NAME
-

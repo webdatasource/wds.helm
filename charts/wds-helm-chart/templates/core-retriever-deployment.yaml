@@ -3,6 +3,7 @@
   {{- $env := list
     (dict "name" "IDEALER_ORIGIN" "value" "http://idealer")
     (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
+    (dict "name" "SEARCH_MODE" "value" .Values.global.coreServices.search.mode)
   }}
 
   {{- if .Values.global.coreServices.license.key }}

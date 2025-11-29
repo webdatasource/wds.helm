@@ -4,6 +4,7 @@
     (dict "name" "EXTERNAL_IP_ADDRESS_CONFIGS" "value" (join "," .Values.global.coreServices.externalIpConfigs))
     (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
     (dict "name" "BASE_PATH" "value" .Values.global.ingress.basePath)
+    (dict "name" "SEARCH_MODE" "value" .Values.global.coreServices.search.mode)
   }}
 
   {{- if .Values.global.coreServices.databases.mongodb.connectionString }}

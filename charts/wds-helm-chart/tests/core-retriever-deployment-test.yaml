@@ -85,30 +85,51 @@ tests:
           value: Information
       - equal:
           path: spec.template.spec.containers[0].env[2].name
-          value: LICENSE_KEY
+          value: SEARCH_MODE
       - equal:
           path: spec.template.spec.containers[0].env[2].value
-          value: test-license-key
+          value: FullText
       - equal:
           path: spec.template.spec.containers[0].env[3].name
-          value: MONGODB_CONNECTION_STRING
+          value: LICENSE_KEY
       - equal:
           path: spec.template.spec.containers[0].env[3].value
-          value: test-mongodb-connectionString
+          value: test-license-key
       - equal:
           path: spec.template.spec.containers[0].env[4].name
-          value: MONGODB_DATABASE_NAME
+          value: MONGODB_CONNECTION_STRING
       - equal:
           path: spec.template.spec.containers[0].env[4].value
+          value: test-mongodb-connectionString
+      - equal:
+          path: spec.template.spec.containers[0].env[5].name
+          value: MONGODB_DATABASE_NAME
+      - equal:
+          path: spec.template.spec.containers[0].env[5].value
           value: WebDataSource
       - notExists:
-          path: spec.template.spec.containers[0].env[5]
+          path: spec.template.spec.containers[0].env[6]
       - notExists:
           path: spec.template.spec.nodeSelector
       - notExists:
           path: spec.template.spec.tolerations
       - notExists:
           path: spec.template.spec.affinity
+
+  - it: should set SEARCH_MODE from values
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.search.mode: Vector
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[2].name
+          value: SEARCH_MODE
+      - equal:
+          path: spec.template.spec.containers[0].env[2].value
+          value: Vector
 
   - it: should support license.keySecretRef
     set:
@@ -123,13 +144,13 @@ tests:
       - isKind:
           of: Deployment
       - equal:
-          path: spec.template.spec.containers[0].env[2].name
+          path: spec.template.spec.containers[0].env[3].name
           value: LICENSE_KEY
       - equal:
-          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
+          path: spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.name
           value: license-secret
       - equal:
-          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.key
+          path: spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.key
           value: license-key
       - notExists:
           path: spec.template.spec.nodeSelector
@@ -350,13 +371,13 @@ tests:
         key: conn
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[3].name
+          path: spec.template.spec.containers[0].env[4].name
           value: MONGODB_CONNECTION_STRING
       - equal:
-          path: spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.name
+          path: spec.template.spec.containers[0].env[4].valueFrom.secretKeyRef.name
           value: mongo-secret
       - equal:
-          path: spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.key
+          path: spec.template.spec.containers[0].env[4].valueFrom.secretKeyRef.key
           value: conn
 
   - it: should prefer mongodb.connectionString over secretRef when both set
@@ -370,13 +391,13 @@ tests:
         key: conn
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[3].name
+          path: spec.template.spec.containers[0].env[4].name
           value: MONGODB_CONNECTION_STRING
       - equal:
-          path: spec.template.spec.containers[0].env[3].value
+          path: spec.template.spec.containers[0].env[4].value
           value: literal-mongo
       - notExists:
-          path: spec.template.spec.containers[0].env[3].valueFrom
+          path: spec.template.spec.containers[0].env[4].valueFrom
 
   - it: should include embedding env vars when external provider configured
     set:
@@ -395,22 +416,22 @@ tests:
       - isKind:
           of: Deployment
       - equal:
-          path: spec.template.spec.containers[0].env[5].name
-          value: EMBEDDING_SERVICE_URL
-      - equal:
-          path: spec.template.spec.containers[0].env[5].valueFrom.secretKeyRef.name
-          value: embed-secret
-      - equal:
-          path: spec.template.spec.containers[0].env[5].valueFrom.secretKeyRef.key
-          value: url
-      - equal:
           path: spec.template.spec.containers[0].env[6].name
-          value: EMBEDDING_SERVICE_API_KEY
+          value: EMBEDDING_SERVICE_URL
       - equal:
           path: spec.template.spec.containers[0].env[6].valueFrom.secretKeyRef.name
           value: embed-secret
       - equal:
           path: spec.template.spec.containers[0].env[6].valueFrom.secretKeyRef.key
+          value: url
+      - equal:
+          path: spec.template.spec.containers[0].env[7].name
+          value: EMBEDDING_SERVICE_API_KEY
+      - equal:
+          path: spec.template.spec.containers[0].env[7].valueFrom.secretKeyRef.name
+          value: embed-secret
+      - equal:
+          path: spec.template.spec.containers[0].env[7].valueFrom.secretKeyRef.key
           value: apiKey
 
   - it: should allow literal embedding url/apiKey when secret name missing
@@ -428,34 +449,34 @@ tests:
       - isKind:
           of: Deployment
       - equal:
-          path: spec.template.spec.containers[0].env[5].name
+          path: spec.template.spec.containers[0].env[6].name
           value: EMBEDDING_SERVICE_URL
       - equal:
-          path: spec.template.spec.containers[0].env[5].value
+          path: spec.template.spec.containers[0].env[6].value
           value: https://embed.example
       - equal:
-          path: spec.template.spec.containers[0].env[6].name
+          path: spec.template.spec.containers[0].env[7].name
           value: EMBEDDING_SERVICE_API_KEY
       - equal:
-          path: spec.template.spec.containers[0].env[6].value
+          path: spec.template.spec.containers[0].env[7].value
           value: secret-key
       - equal:
-          path: spec.template.spec.containers[0].env[7].name
+          path: spec.template.spec.containers[0].env[8].name
           value: EMBEDDING_SERVICE_REQUEST_TEMPLATE
       - equal:
-          path: spec.template.spec.containers[0].env[7].value
+          path: spec.template.spec.containers[0].env[8].value
           value: "{ 'model': 'embeddinggemma', 'input': null }"
       - equal:
-          path: spec.template.spec.containers[0].env[8].name
+          path: spec.template.spec.containers[0].env[9].name
           value: EMBEDDING_SERVICE_CONTENT_JSON_PATH
       - equal:
-          path: spec.template.spec.containers[0].env[8].value
+          path: spec.template.spec.containers[0].env[9].value
           value: "$.input"
       - equal:
-          path: spec.template.spec.containers[0].env[9].name
+          path: spec.template.spec.containers[0].env[10].name
           value: EMBEDDING_SERVICE_RESULT_JSON_PATH
       - equal:
-          path: spec.template.spec.containers[0].env[9].value
+          path: spec.template.spec.containers[0].env[10].value
           value: "$.embeddings"
 
   - it: should include search DB envs (literal connection string)
@@ -470,16 +491,16 @@ tests:
       - isKind:
           of: Deployment
       - equal:
-          path: spec.template.spec.containers[0].env[5].name
+          path: spec.template.spec.containers[0].env[6].name
           value: SEARCH_DB_CONNECTION_STRING
       - equal:
-          path: spec.template.spec.containers[0].env[5].value
+          path: spec.template.spec.containers[0].env[6].value
           value: search-conn
       - equal:
-          path: spec.template.spec.containers[0].env[6].name
+          path: spec.template.spec.containers[0].env[7].name
           value: SEARCH_DB_DATABASE_NAME
       - equal:
-          path: spec.template.spec.containers[0].env[6].value
+          path: spec.template.spec.containers[0].env[7].value
           value: SearchDB
 
   - it: should include search DB envs (secretRef connection string)
@@ -497,19 +518,19 @@ tests:
       - isKind:
           of: Deployment
       - equal:
-          path: spec.template.spec.containers[0].env[5].name
+          path: spec.template.spec.containers[0].env[6].name
           value: SEARCH_DB_CONNECTION_STRING
       - equal:
-          path: spec.template.spec.containers[0].env[5].valueFrom.secretKeyRef.name
+          path: spec.template.spec.containers[0].env[6].valueFrom.secretKeyRef.name
           value: search-secret
       - equal:
-          path: spec.template.spec.containers[0].env[5].valueFrom.secretKeyRef.key
+          path: spec.template.spec.containers[0].env[6].valueFrom.secretKeyRef.key
           value: conn
       - equal:
-          path: spec.template.spec.containers[0].env[6].name
+          path: spec.template.spec.containers[0].env[7].name
           value: SEARCH_DB_DATABASE_NAME
       - equal:
-          path: spec.template.spec.containers[0].env[6].value
+          path: spec.template.spec.containers[0].env[7].value
           value: SearchDB2
 
   - it: should prefer search DB literal over secretRef when both set
@@ -525,16 +546,16 @@ tests:
       global.coreServices.search.database.databaseName: SearchDB3
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[5].name
+          path: spec.template.spec.containers[0].env[6].name
           value: SEARCH_DB_CONNECTION_STRING
       - equal:
-          path: spec.template.spec.containers[0].env[5].value
+          path: spec.template.spec.containers[0].env[6].value
           value: literal-search
       - notExists:
-          path: spec.template.spec.containers[0].env[5].valueFrom
+          path: spec.template.spec.containers[0].env[6].valueFrom
       - equal:
-          path: spec.template.spec.containers[0].env[6].name
+          path: spec.template.spec.containers[0].env[7].name
           value: SEARCH_DB_DATABASE_NAME
       - equal:
-          path: spec.template.spec.containers[0].env[6].value
+          path: spec.template.spec.containers[0].env[7].value
           value: SearchDB3

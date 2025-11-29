@@ -61,6 +61,8 @@ global:
     search:
       # Search enabled.
       enabled: false
+      # Search mode.
+      mode: "FullText" # Search mode. Supported modes: "FullText" (Full text search only using the Lucene engine), "Vector" (Vector search only), "FullTextAndVector" (Runs Text search first, and if the results count is less than requested, runs Vector search to fill the rest of the results)
       # Search databse. Supported databses: MongoDB Atlas. If not set, the system's MongoDB connection string of the retriever service is used, and in this case it must be a connection string to a MongoDB Atlas or Enterprise.
       database: 
         # Search database connection string (use for a vault reference. For instance, https://github.com/bank-vaults/vault-secrets-webhook)
@@ -72,6 +74,7 @@ global:
         connectionStringSecretRef: {}
         # MongoDB database name. If not set, a database name from the connection string will be used.
         databaseName: "WebDataSource" 
+      # Embedding service configuration. Required if search.mode is "Vector" or "FullTextAndVector"
       embeddingService:
         # Embedding service URL (use for a vault reference. For instance, https://github.com/bank-vaults/vault-secrets-webhook)
         url: ""

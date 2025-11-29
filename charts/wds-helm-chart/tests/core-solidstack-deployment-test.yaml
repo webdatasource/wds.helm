@@ -72,15 +72,21 @@ tests:
           value: /
       - equal:
           path: spec.template.spec.containers[0].env[4].name
-          value: MONGODB_CONNECTION_STRING
+          value: SEARCH_MODE
       - equal:
           path: spec.template.spec.containers[0].env[4].value
-          value: test
+          value: FullText
       - equal:
           path: spec.template.spec.containers[0].env[5].name
-          value: MONGODB_DATABASE_NAME
+          value: MONGODB_CONNECTION_STRING
       - equal:
           path: spec.template.spec.containers[0].env[5].value
+          value: test
+      - equal:
+          path: spec.template.spec.containers[0].env[6].name
+          value: MONGODB_DATABASE_NAME
+      - equal:
+          path: spec.template.spec.containers[0].env[6].value
           value: WebDataSource
       - notExists:
           path: spec.template.spec.nodeSelector
@@ -89,6 +95,19 @@ tests:
       - notExists:
           path: spec.template.spec.affinity
 
+  - it: should set SEARCH_MODE from values
+    set:
+      global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.search.mode: FullTextAndVector
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[4].name
+          value: SEARCH_MODE
+      - equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: FullTextAndVector
+
   - it: should respect exceptionResponseDelayMs
     set:
       global.coreServices.mode: SingleService
@@ -96,10 +115,10 @@ tests:
       global.coreServices.exceptionResponseDelayMs: 10
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[6].name
+          path: spec.template.spec.containers[0].env[7].name
           value: GLOBAL_EXCEPTION_RESPONSE_DELAY_MS
       - equal:
-          path: spec.template.spec.containers[0].env[6].value
+          path: spec.template.spec.containers[0].env[7].value
           value: "10"
 
   - it: should include embedding env vars and retrieval flag (secret refs)
@@ -116,46 +135,46 @@ tests:
       global.coreServices.search.embeddingService.resultJsonPath: "$.embeddings"
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[6].name
+          path: spec.template.spec.containers[0].env[7].name
           value: FEATURE_FLAG_RETRIEVAL_ENABLED
       - equal:
-          path: spec.template.spec.containers[0].env[6].value
+          path: spec.template.spec.containers[0].env[7].value
           value: "true"
       - equal:
-          path: spec.template.spec.containers[0].env[7].name
-          value: EMBEDDING_SERVICE_URL
-      - equal:
-          path: spec.template.spec.containers[0].env[7].valueFrom.secretKeyRef.name
-          value: embed-secret
-      - equal:
-          path: spec.template.spec.containers[0].env[7].valueFrom.secretKeyRef.key
-          value: url
-      - equal:
           path: spec.template.spec.containers[0].env[8].name
-          value: EMBEDDING_SERVICE_API_KEY
+          value: EMBEDDING_SERVICE_URL
       - equal:
           path: spec.template.spec.containers[0].env[8].valueFrom.secretKeyRef.name
           value: embed-secret
       - equal:
           path: spec.template.spec.containers[0].env[8].valueFrom.secretKeyRef.key
-          value: apiKey
+          value: url
       - equal:
           path: spec.template.spec.containers[0].env[9].name
-          value: EMBEDDING_SERVICE_REQUEST_TEMPLATE
+          value: EMBEDDING_SERVICE_API_KEY
       - equal:
-          path: spec.template.spec.containers[0].env[9].value
-          value: "{ 'model': 'embeddinggemma', 'input': null }"
+          path: spec.template.spec.containers[0].env[9].valueFrom.secretKeyRef.name
+          value: embed-secret
+      - equal:
+          path: spec.template.spec.containers[0].env[9].valueFrom.secretKeyRef.key
+          value: apiKey
       - equal:
           path: spec.template.spec.containers[0].env[10].name
-          value: EMBEDDING_SERVICE_CONTENT_JSON_PATH
+          value: EMBEDDING_SERVICE_REQUEST_TEMPLATE
       - equal:
           path: spec.template.spec.containers[0].env[10].value
-          value: "$.input"
+          value: "{ 'model': 'embeddinggemma', 'input': null }"
       - equal:
           path: spec.template.spec.containers[0].env[11].name
-          value: EMBEDDING_SERVICE_RESULT_JSON_PATH
+          value: EMBEDDING_SERVICE_CONTENT_JSON_PATH
       - equal:
           path: spec.template.spec.containers[0].env[11].value
+          value: "$.input"
+      - equal:
+          path: spec.template.spec.containers[0].env[12].name
+          value: EMBEDDING_SERVICE_RESULT_JSON_PATH
+      - equal:
+          path: spec.template.spec.containers[0].env[12].value
           value: "$.embeddings"
 
   - it: should not include embedding env vars and retrieval flag when retrieval disabled
@@ -170,8 +189,6 @@ tests:
       global.coreServices.search.embeddingService.resultJsonPath: "$.embeddings"
     asserts:
       - notExists:
-          path: spec.template.spec.containers[0].env[6]
-      - notExists:
           path: spec.template.spec.containers[0].env[7]
       - notExists:
           path: spec.template.spec.containers[0].env[8]
@@ -181,6 +198,8 @@ tests:
           path: spec.template.spec.containers[0].env[10]
       - notExists:
           path: spec.template.spec.containers[0].env[11]
+      - notExists:
+          path: spec.template.spec.containers[0].env[12]
 
   - it: should support mongodb.connectionStringSecretRef
     set:
@@ -191,13 +210,13 @@ tests:
         key: conn
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[4].name
+          path: spec.template.spec.containers[0].env[5].name
           value: MONGODB_CONNECTION_STRING
       - equal:
-          path: spec.template.spec.containers[0].env[4].valueFrom.secretKeyRef.name
+          path: spec.template.spec.containers[0].env[5].valueFrom.secretKeyRef.name
           value: mongo-secret
       - equal:
-          path: spec.template.spec.containers[0].env[4].valueFrom.secretKeyRef.key
+          path: spec.template.spec.containers[0].env[5].valueFrom.secretKeyRef.key
           value: conn
 
   - it: should prefer mongodb.connectionString over secretRef when both set
@@ -209,13 +228,13 @@ tests:
         key: conn
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[4].name
+          path: spec.template.spec.containers[0].env[5].name
           value: MONGODB_CONNECTION_STRING
       - equal:
-          path: spec.template.spec.containers[0].env[4].value
+          path: spec.template.spec.containers[0].env[5].value
           value: literal-mongo
       - notExists:
-          path: spec.template.spec.containers[0].env[4].valueFrom
+          path: spec.template.spec.containers[0].env[5].valueFrom
 
   - it: should render image without registry when global.registry empty
     set:

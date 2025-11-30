@@ -115,7 +115,7 @@ global:
       # Whether to deploy docs service
       enabled: true
       # Docs image default tag. Its release cadence is different from other services because documentation is released more often
-      defaultTag: "v2.0"
+      defaultTag: "v2.1"
     playground:
       # Whether to deploy playground service
       enabled: true

@@ -27,10 +27,10 @@ global:
     license:
       key: ""
       # Reference to a Kubernetes secret that contains a license key.
-      # keyRef:
+      # keySecretRef:
       #   name: my-secret
       #   key: license-key
-      keyRef: {}
+      keySecretRef: {}
     # Cache configuration (is used only in MultiService mode)
     # If both connectionString and connectionStringSecretRef are set, connectionString is used.
     cache:
@@ -57,6 +57,47 @@ global:
         connectionStringSecretRef: {}
         # MongoDB database name. If not set, a database name from the connection string will be used.
         databaseName: "WebDataSource" 
+    # Search configuration
+    search:
+      # Search enabled.
+      enabled: false
+      # Search mode.
+      mode: "FullText" # Search mode. Supported modes: "FullText" (Full text search only using the Lucene engine), "Vector" (Vector search only), "FullTextAndVector" (Runs Text search first, and if the results count is less than requested, runs Vector search to fill the rest of the results)
+      # Search databse. Supported databses: MongoDB Atlas. If not set, the system's MongoDB connection string of the retriever service is used, and in this case it must be a connection string to a MongoDB Atlas or Enterprise.
+      database: 
+        # Search database connection string (use for a vault reference. For instance, https://github.com/bank-vaults/vault-secrets-webhook)
+        connectionString: ""
+        # Reference to a Kubernetes secret that contains the search database connection string.
+        # connectionStringSecretRef:
+        #   name: my-secret
+        #   key: connection-string
+        connectionStringSecretRef: {}
+        # MongoDB database name. If not set, a database name from the connection string will be used.
+        databaseName: "WebDataSource" 
+      # Embedding service configuration. Required if search.mode is "Vector" or "FullTextAndVector"
+      embeddingService:
+        # Embedding service URL (use for a vault reference. For instance, https://github.com/bank-vaults/vault-secrets-webhook)
+        url: ""
+        # Embedding service API key (use for a vault reference. For instance, https://github.com/bank-vaults/vault-secrets-webhook)
+        apiKey: ""
+        # URL of the external embedding service (is used only if provider is set to "external")
+        # urlSecretRef:
+        #   name: my-secret
+        #   key: url
+        urlSecretRef: {}
+        # API key of the external embedding service (is used only if provider is set to "external")
+        # urlSecretRef:
+        #   name: my-secret
+        #   key: api-key
+        apiKeySecretRef: {}
+        # Embedding model dimension count. The default for the embeddinggemma model is 768.
+        dimentionsCount: 768
+        # Request template for the external embedding service. Default (is used for the internal provider): "{ 'model': 'embeddinggemma', 'input': null }"
+        requestTemplate: ""
+        # JSON path to apply an input (array of strings) to an embedding request. Default (is used for the internal provider): "$.input"
+        contentJsonPath: ""
+        # JSON path to extract embedding result (array of arrays) from the response. Default (is used for the internal provider): "$.embeddings"
+        resultJsonPath: ""
     # Available job types
     jobTypes: 
     - intranet # Crawl data from intranet sources with no limits
@@ -74,7 +115,7 @@ global:
       # Whether to deploy docs service
       enabled: true
       # Docs image default tag. Its release cadence is different from other services because documentation is released more often
-      defaultTag: "v2.0"
+      defaultTag: "v2.1"
     playground:
       # Whether to deploy playground service
       enabled: true
@@ -266,6 +307,34 @@ coreServices:
     affinityOverride: {}
     hpa: {}
     pdb: {}
+  retriever: # Is deployed only if global.coreServices.search.enabled is true
+    # Number of pod replicas
+    replicaCount: 2
+    image:
+      # Image name (repository/name)
+      name: ""
+      # Image tag (default: .Chart.AppVersion)
+      tag: ""
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
+    # Override global.config.coreServices.databases.mongodb.databaseName for this service
+    databases:
+      mongodb:
+        databaseName: ""
+    # Override global.resources for this service
+    resourcesOverride: {}
+    # Override global.deploymentExtraLabels 
+    deploymentExtraLabelsOverride: {}
+    # Override global.serviceExtraLabels for this service
+    serviceExtraLabelsOverride: {}
+    # Override global.nodeSelector for this service
+    nodeSelectorOverride: {}
+    # Override global.tolerations for this service
+    tolerationsOverride: []
+    # Override global.affinity for this service
+    affinityOverride: {}
+    hpa: {}
+    pdb: {}
 auxiliaryServices:
   playground:
     # Number of pod replicas
@@ -292,7 +361,6 @@ auxiliaryServices:
     hpa: {}
     pdb:
       enabled: false # Enable if replicaCount > 1
-    
   docs:
     # Number of pod replicas
     replicaCount: 1

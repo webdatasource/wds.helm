@@ -4,6 +4,7 @@
     (dict "name" "EXTERNAL_IP_ADDRESS_CONFIGS" "value" (join "," .Values.global.coreServices.externalIpConfigs))
     (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
     (dict "name" "BASE_PATH" "value" .Values.global.ingress.basePath)
+    (dict "name" "SEARCH_MODE" "value" .Values.global.coreServices.search.mode)
   }}
 
   {{- if .Values.global.coreServices.databases.mongodb.connectionString }}
@@ -20,6 +21,41 @@
 
   {{- if .Values.global.coreServices.exceptionResponseDelayMs }}
     {{- $env = append $env (dict "name" "GLOBAL_EXCEPTION_RESPONSE_DELAY_MS" "value" .Values.global.coreServices.exceptionResponseDelayMs) }}
+  {{- end }}
+
+  {{- if .Values.global.coreServices.search.enabled }}
+    {{- $env = append $env (dict "name" "FEATURE_FLAG_RETRIEVAL_ENABLED" "value" "true") }}
+
+    {{- $emb := .Values.global.coreServices.search.embeddingService -}}
+    {{- $urlSec := (default (dict) $emb.urlSecretRef) -}}
+    {{- $apiSec := (default (dict) $emb.apiKeySecretRef) -}}
+    {{- $hasUrlSec := and (hasKey $urlSec "name") (hasKey $urlSec "key") $urlSec.name $urlSec.key -}}
+    {{- $hasUrlLit := and (hasKey $emb "url") $emb.url -}}
+    {{- if $hasUrlSec }}
+      {{- $env = append $env (dict "name" "EMBEDDING_SERVICE_URL" "valueFrom" (dict "secretKeyRef" (dict "name" $urlSec.name "key" $urlSec.key))) }}
+    {{- else if $hasUrlLit }}
+      {{- $env = append $env (dict "name" "EMBEDDING_SERVICE_URL" "value" $emb.url) }}
+    {{- end }}
+
+    {{- $hasApiSec := and (hasKey $apiSec "name") (hasKey $apiSec "key") $apiSec.name $apiSec.key -}}
+    {{- $hasApiLit := and (hasKey $emb "apiKey") $emb.apiKey -}}
+    {{- if $hasApiSec }}
+      {{- $env = append $env (dict "name" "EMBEDDING_SERVICE_API_KEY" "valueFrom" (dict "secretKeyRef" (dict "name" $apiSec.name "key" $apiSec.key))) }}
+    {{- else if $hasApiLit }}
+      {{- $env = append $env (dict "name" "EMBEDDING_SERVICE_API_KEY" "value" $emb.apiKey) }}
+    {{- end }}
+
+    {{- if $emb.requestTemplate}}
+      {{- $env = append $env (dict "name" "EMBEDDING_SERVICE_REQUEST_TEMPLATE" "value" $emb.requestTemplate) }}
+    {{- end }}
+
+    {{- if $emb.contentJsonPath }}
+      {{- $env = append $env (dict "name" "EMBEDDING_SERVICE_CONTENT_JSON_PATH" "value" $emb.contentJsonPath) }}
+    {{- end }}
+
+    {{- if $emb.resultJsonPath }}
+      {{- $env = append $env (dict "name" "EMBEDDING_SERVICE_RESULT_JSON_PATH" "value" $emb.resultJsonPath) }}
+    {{- end }}
   {{- end }}
 
 {{ include "wds-helm-chart.deployment" (dict

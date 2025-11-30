@@ -1,11 +1,20 @@
-suite: test datakeeper service
+suite: test retriever service
 templates:
-  - core-datakeeper-service.yaml
+  - core-retriever-service.yaml
 
 tests:
   - it: should not render when mode != MultiService
     set:
       global.coreServices.mode: SingleService
+      global.coreServices.search.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render when search disabled
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: false
     asserts:
       - hasDocuments:
           count: 0
@@ -13,18 +22,19 @@ tests:
   - it: should render with defaults
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
     asserts:
       - isKind:
           of: Service
       - equal:
           path: spec.ports[0].name
-          value: grpc-web-dk
+          value: grpc-web
       - equal:
           path: spec.ports[0].port
           value: 8082
       - equal:
           path: spec.ports[0].targetPort
-          value: grpc-web-dk
+          value: grpc-web
       - equal:
           path: spec.ports[1].name
           value: health
@@ -36,18 +46,19 @@ tests:
           value: health
       - equal:
           path: metadata.labels.app
-          value: datakeeper
+          value: retriever
       - equal:
           path: spec.selector.app
-          value: datakeeper
+          value: retriever
 
   - it: should merge global and service serviceExtraLabels
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
       global.serviceExtraLabels:
         globalLabel: g
         common: global
-      coreServices.datakeeper.serviceExtraLabelsOverride:
+      coreServices.retriever.serviceExtraLabelsOverride:
         serviceLabel: s
         common: service
     asserts:
@@ -64,6 +75,7 @@ tests:
   - it: should include shared chart labels and selector labels
     set:
       global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
     asserts:
       - equal:
           path: metadata.labels["app.kubernetes.io/name"]

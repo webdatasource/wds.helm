@@ -1,0 +1,15 @@
+{{- if and (eq .Values.global.coreServices.mode "MultiService") .Values.global.coreServices.search.enabled }}
+  {{- $name := "retriever" }}
+  {{- $params := include "dictAddMissing" (list .Values.coreServices.retriever.hpa .Values.global.hpa) | fromYaml -}}
+  {{- if $params.enabled }}
+    {{ include "wds-helm-chart.hpa" (dict
+        "ctx" .
+        "name" $name
+        "minReplicas" $params.minReplicas
+        "maxReplicas" $params.maxReplicas
+        "cpu" $params.targetCPUUtilizationPercentage
+        "memory" $params.targetMemoryUtilizationPercentage
+      ) }}
+  {{- end }}
+{{- end }}
+

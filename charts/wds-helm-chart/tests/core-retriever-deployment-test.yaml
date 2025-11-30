@@ -1,0 +1,561 @@
+suite: test core retriever deployment
+templates:
+  - core-retriever-deployment.yaml
+
+tests:
+  - it: should not render when mode != MultiService
+    set:
+      global.coreServices.mode: SingleService
+      global.coreServices.search.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render when search disabled
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render when mode = MultiService and search enabled
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+    asserts:
+      - isKind:
+          of: Deployment
+
+  - it: should render with defaults
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test-license-key
+      global.coreServices.databases.mongodb.connectionString: test-mongodb-connectionString
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.replicas
+          value: 2
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^docker\.io/webdatasource/retriever:v\d+\.\d+\.\d+$
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: IfNotPresent
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].name
+          value: grpc-web
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 8082
+      - equal:
+          path: spec.template.spec.containers[0].ports[1].name
+          value: health
+      - equal:
+          path: spec.template.spec.containers[0].ports[1].containerPort
+          value: 8080
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /health
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: 8080
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /ready
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: 8080
+      - equal:
+          path: spec.template.spec.containers[0].env[0].name
+          value: IDEALER_ORIGIN
+      - equal:
+          path: spec.template.spec.containers[0].env[0].value
+          value: http://idealer
+      - equal:
+          path: spec.template.spec.containers[0].env[1].name
+          value: MIN_LOG_LEVEL
+      - equal:
+          path: spec.template.spec.containers[0].env[1].value
+          value: Information
+      - equal:
+          path: spec.template.spec.containers[0].env[2].name
+          value: SEARCH_MODE
+      - equal:
+          path: spec.template.spec.containers[0].env[2].value
+          value: FullText
+      - equal:
+          path: spec.template.spec.containers[0].env[3].name
+          value: LICENSE_KEY
+      - equal:
+          path: spec.template.spec.containers[0].env[3].value
+          value: test-license-key
+      - equal:
+          path: spec.template.spec.containers[0].env[4].name
+          value: MONGODB_CONNECTION_STRING
+      - equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: test-mongodb-connectionString
+      - equal:
+          path: spec.template.spec.containers[0].env[5].name
+          value: MONGODB_DATABASE_NAME
+      - equal:
+          path: spec.template.spec.containers[0].env[5].value
+          value: WebDataSource
+      - notExists:
+          path: spec.template.spec.containers[0].env[6]
+      - notExists:
+          path: spec.template.spec.nodeSelector
+      - notExists:
+          path: spec.template.spec.tolerations
+      - notExists:
+          path: spec.template.spec.affinity
+
+  - it: should set SEARCH_MODE from values
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.search.mode: Vector
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[2].name
+          value: SEARCH_MODE
+      - equal:
+          path: spec.template.spec.containers[0].env[2].value
+          value: Vector
+
+  - it: should support license.keySecretRef
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: ""
+      global.coreServices.license.keySecretRef:
+        name: license-secret
+        key: license-key
+      global.coreServices.databases.mongodb.connectionString: test
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].env[3].name
+          value: LICENSE_KEY
+      - equal:
+          path: spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.name
+          value: license-secret
+      - equal:
+          path: spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.key
+          value: license-key
+      - notExists:
+          path: spec.template.spec.nodeSelector
+      - notExists:
+          path: spec.template.spec.tolerations
+      - notExists:
+          path: spec.template.spec.affinity
+
+  - it: should render image without registry when global.registry empty
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.registry: ""
+    asserts:
+    - matchRegex:
+        path: spec.template.spec.containers[0].image
+        pattern: ^webdatasource/retriever:v\d+\.\d+\.\d+$
+
+  - it: should render image with overrides (registry, name, tag, pullPolicy)
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.registry: custom.registry
+      coreServices.retriever.image.name: org/custom-retriever
+      coreServices.retriever.image.tag: v9
+      coreServices.retriever.image.pullPolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: custom.registry/org/custom-retriever:v9
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+
+  - it: should respect replicaCount override
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      coreServices.retriever.replicaCount: 3
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3
+
+  - it: should merge global and service deploymentExtraLabels
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.deploymentExtraLabels:
+        globalLabel: g
+        common: global
+      coreServices.retriever.deploymentExtraLabelsOverride:
+        serviceLabel: s
+        common: service
+    asserts:
+      - equal:
+          path: metadata.labels.globalLabel
+          value: g
+      - equal:
+          path: metadata.labels.serviceLabel
+          value: s
+      - equal:
+          path: metadata.labels.common
+          value: service
+
+  - it: should apply global nodeSelector
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.nodeSelector:
+        disktype: ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector.disktype
+          value: ssd
+
+  - it: should allow nodeSelector override per service
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.nodeSelector:
+        disktype: ssd
+      coreServices.retriever.nodeSelectorOverride:
+        disktype: hdd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector.disktype
+          value: hdd
+
+  - it: should apply global tolerations
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.tolerations:
+        - key: dedicated
+          operator: Equal
+          value: retriever
+          effect: NoSchedule
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations[0].key
+          value: dedicated
+      - equal:
+          path: spec.template.spec.tolerations[0].operator
+          value: Equal
+      - equal:
+          path: spec.template.spec.tolerations[0].value
+          value: retriever
+      - equal:
+          path: spec.template.spec.tolerations[0].effect
+          value: NoSchedule
+
+  - it: should allow tolerations override per service
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.tolerations:
+        - key: dedicated
+          operator: Equal
+          value: retriever
+          effect: NoSchedule
+      coreServices.retriever.tolerationsOverride:
+        - key: special
+          operator: Exists
+          effect: NoExecute
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations[0].key
+          value: special
+      - equal:
+          path: spec.template.spec.tolerations[0].operator
+          value: Exists
+      - equal:
+          path: spec.template.spec.tolerations[0].effect
+          value: NoExecute
+
+  - it: should apply global affinity
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                - key: disktype
+                  operator: In
+                  values:
+                    - ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: disktype
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].values[0]
+          value: ssd
+
+  - it: should allow affinity override per service
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                - key: disktype
+                  operator: In
+                  values:
+                    - ssd
+      coreServices.retriever.affinityOverride:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - retriever
+                topologyKey: kubernetes.io/hostname
+    asserts:
+      - notExists:
+          path: spec.template.spec.affinity.nodeAffinity
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
+          value: 100
+
+  - it: should support mongodb.connectionStringSecretRef
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: ""
+      global.coreServices.databases.mongodb.connectionStringSecretRef:
+        name: mongo-secret
+        key: conn
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[4].name
+          value: MONGODB_CONNECTION_STRING
+      - equal:
+          path: spec.template.spec.containers[0].env[4].valueFrom.secretKeyRef.name
+          value: mongo-secret
+      - equal:
+          path: spec.template.spec.containers[0].env[4].valueFrom.secretKeyRef.key
+          value: conn
+
+  - it: should prefer mongodb.connectionString over secretRef when both set
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: literal-mongo
+      global.coreServices.databases.mongodb.connectionStringSecretRef:
+        name: mongo-secret
+        key: conn
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[4].name
+          value: MONGODB_CONNECTION_STRING
+      - equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: literal-mongo
+      - notExists:
+          path: spec.template.spec.containers[0].env[4].valueFrom
+
+  - it: should include embedding env vars when external provider configured
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.search.embeddingService.urlSecretRef.name: embed-secret
+      global.coreServices.search.embeddingService.urlSecretRef.key: url
+      global.coreServices.search.embeddingService.apiKeySecretRef.name: embed-secret
+      global.coreServices.search.embeddingService.apiKeySecretRef.key: apiKey
+      global.coreServices.search.embeddingService.requestTemplate: "{ 'model': 'embeddinggemma', 'input': null }"
+      global.coreServices.search.embeddingService.contentJsonPath: "$.input"
+      global.coreServices.search.embeddingService.resultJsonPath: "$.embeddings"
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].env[6].name
+          value: EMBEDDING_SERVICE_URL
+      - equal:
+          path: spec.template.spec.containers[0].env[6].valueFrom.secretKeyRef.name
+          value: embed-secret
+      - equal:
+          path: spec.template.spec.containers[0].env[6].valueFrom.secretKeyRef.key
+          value: url
+      - equal:
+          path: spec.template.spec.containers[0].env[7].name
+          value: EMBEDDING_SERVICE_API_KEY
+      - equal:
+          path: spec.template.spec.containers[0].env[7].valueFrom.secretKeyRef.name
+          value: embed-secret
+      - equal:
+          path: spec.template.spec.containers[0].env[7].valueFrom.secretKeyRef.key
+          value: apiKey
+
+  - it: should allow literal embedding url/apiKey when secret name missing
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.search.embeddingService.url: https://embed.example
+      global.coreServices.search.embeddingService.apiKey: secret-key
+      global.coreServices.search.embeddingService.requestTemplate: "{ 'model': 'embeddinggemma', 'input': null }"
+      global.coreServices.search.embeddingService.contentJsonPath: "$.input"
+      global.coreServices.search.embeddingService.resultJsonPath: "$.embeddings"
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].env[6].name
+          value: EMBEDDING_SERVICE_URL
+      - equal:
+          path: spec.template.spec.containers[0].env[6].value
+          value: https://embed.example
+      - equal:
+          path: spec.template.spec.containers[0].env[7].name
+          value: EMBEDDING_SERVICE_API_KEY
+      - equal:
+          path: spec.template.spec.containers[0].env[7].value
+          value: secret-key
+      - equal:
+          path: spec.template.spec.containers[0].env[8].name
+          value: EMBEDDING_SERVICE_REQUEST_TEMPLATE
+      - equal:
+          path: spec.template.spec.containers[0].env[8].value
+          value: "{ 'model': 'embeddinggemma', 'input': null }"
+      - equal:
+          path: spec.template.spec.containers[0].env[9].name
+          value: EMBEDDING_SERVICE_CONTENT_JSON_PATH
+      - equal:
+          path: spec.template.spec.containers[0].env[9].value
+          value: "$.input"
+      - equal:
+          path: spec.template.spec.containers[0].env[10].name
+          value: EMBEDDING_SERVICE_RESULT_JSON_PATH
+      - equal:
+          path: spec.template.spec.containers[0].env[10].value
+          value: "$.embeddings"
+
+  - it: should include search DB envs (literal connection string)
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.search.database.connectionString: search-conn
+      global.coreServices.search.database.databaseName: SearchDB
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].env[6].name
+          value: SEARCH_DB_CONNECTION_STRING
+      - equal:
+          path: spec.template.spec.containers[0].env[6].value
+          value: search-conn
+      - equal:
+          path: spec.template.spec.containers[0].env[7].name
+          value: SEARCH_DB_DATABASE_NAME
+      - equal:
+          path: spec.template.spec.containers[0].env[7].value
+          value: SearchDB
+
+  - it: should include search DB envs (secretRef connection string)
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.search.database.connectionString: ""
+      global.coreServices.search.database.connectionStringSecretRef:
+        name: search-secret
+        key: conn
+      global.coreServices.search.database.databaseName: SearchDB2
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].env[6].name
+          value: SEARCH_DB_CONNECTION_STRING
+      - equal:
+          path: spec.template.spec.containers[0].env[6].valueFrom.secretKeyRef.name
+          value: search-secret
+      - equal:
+          path: spec.template.spec.containers[0].env[6].valueFrom.secretKeyRef.key
+          value: conn
+      - equal:
+          path: spec.template.spec.containers[0].env[7].name
+          value: SEARCH_DB_DATABASE_NAME
+      - equal:
+          path: spec.template.spec.containers[0].env[7].value
+          value: SearchDB2
+
+  - it: should prefer search DB literal over secretRef when both set
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.search.database.connectionString: literal-search
+      global.coreServices.search.database.connectionStringSecretRef:
+        name: search-secret
+        key: conn
+      global.coreServices.search.database.databaseName: SearchDB3
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[6].name
+          value: SEARCH_DB_CONNECTION_STRING
+      - equal:
+          path: spec.template.spec.containers[0].env[6].value
+          value: literal-search
+      - notExists:
+          path: spec.template.spec.containers[0].env[6].valueFrom
+      - equal:
+          path: spec.template.spec.containers[0].env[7].name
+          value: SEARCH_DB_DATABASE_NAME
+      - equal:
+          path: spec.template.spec.containers[0].env[7].value
+          value: SearchDB3

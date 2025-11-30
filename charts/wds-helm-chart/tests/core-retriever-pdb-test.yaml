@@ -1,0 +1,59 @@
+suite: test core retriever PDB
+templates:
+  - core-retriever-pdb.yaml
+tests:
+  - it: should not render when mode != MultiService
+    set:
+      global.coreServices.mode: SingleService
+      global.coreServices.search.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render when search disabled
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render PDB when enabled globally
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: spec.minAvailable
+          value: 1
+
+  - it: should not render PDB when disable for the service
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      coreServices.retriever.pdb.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should allow service-level PDB override values
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      coreServices.retriever.pdb.minAvailable: 2
+      coreServices.retriever.pdb.maxUnavailable: 1
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: spec.minAvailable
+          value: 2
+      - notExists:
+          path: spec.maxUnavailable
+

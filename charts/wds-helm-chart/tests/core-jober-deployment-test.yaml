@@ -1,0 +1,429 @@
+suite: test core jober deployment
+templates:
+  - core-jober-deployment.yaml
+
+tests:
+  - it: should not render outside MultiService mode
+    set:
+      global.coreServices.mode: SingleService
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render in MultiService mode
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: jober
+      - equal:
+          path: spec.replicas
+          value: 2
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: docker.io/webdatasource/jober:v2.1.0
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: IfNotPresent
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 100m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 256Mi
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].name
+          value: grpc-web
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 8082
+      - equal:
+          path: spec.template.spec.containers[0].ports[1].name
+          value: health
+      - equal:
+          path: spec.template.spec.containers[0].ports[1].containerPort
+          value: 8080
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /health
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: 8080
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /ready
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: 8080
+      - equal:
+          path: spec.template.spec.containers[0].env[0]
+          value:
+            name: DATAKEEPER_ORIGIN
+            value: http://datakeeper
+      - equal:
+          path: spec.template.spec.containers[0].env[1]
+          value:
+            name: SCRAPER_ORIGIN
+            value: http://scraper
+      - equal:
+          path: spec.template.spec.containers[0].env[2]
+          value:
+            name: DAPI_ORIGIN
+            value: http://dapi
+      - equal:
+          path: spec.template.spec.containers[0].env[3]
+          value:
+            name: MIN_LOG_LEVEL
+            value: Information
+      - equal:
+          path: spec.template.spec.containers[0].env[4]
+          value:
+            name: LICENSE_KEY
+            value: test
+      - equal:
+          path: spec.template.spec.containers[0].env[5]
+          value:
+            name: MONGODB_CONNECTION_STRING
+            value: test
+      - equal:
+          path: spec.template.spec.containers[0].env[6]
+          value:
+            name: MONGODB_DATABASE_NAME
+            value: WebDataSource
+      - notExists:
+          path: spec.template.spec.containers[0].env[7]
+      - notExists:
+          path: spec.template.spec.nodeSelector
+      - notExists:
+          path: spec.template.spec.tolerations
+      - notExists:
+          path: spec.template.spec.affinity
+
+  - it: should fail without a license
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.databases.mongodb.connectionString: test
+    asserts:
+      - failedTemplate:
+          errorMessage: Either coreServices.license.key or coreServices.license.keySecretRef must be set when coreServices.mode is MultiService
+
+  - it: should support a license secret reference
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: ""
+      global.coreServices.license.keySecretRef:
+        name: license-secret
+        key: license-key
+      global.coreServices.databases.mongodb.connectionString: test
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[4].valueFrom.secretKeyRef
+          value:
+            name: license-secret
+            key: license-key
+
+  - it: should prefer a literal license when both forms are configured
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: literal-license
+      global.coreServices.license.keySecretRef:
+        name: license-secret
+        key: license-key
+      global.coreServices.databases.mongodb.connectionString: test
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: literal-license
+      - notExists:
+          path: spec.template.spec.containers[0].env[4].valueFrom
+
+  - it: should fail without a MongoDB connection string
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: ""
+      global.coreServices.databases.mongodb.connectionStringSecretRef: {}
+    asserts:
+      - failedTemplate:
+          errorMessage: Either coreServices.databases.mongodb.connectionString or coreServices.databases.mongodb.connectionStringSecretRef must be set when coreServices.mode is MultiService
+
+  - it: should support a MongoDB connection string secret reference
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: ""
+      global.coreServices.databases.mongodb.connectionStringSecretRef:
+        name: mongo-secret
+        key: connection-string
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[5].valueFrom.secretKeyRef
+          value:
+            name: mongo-secret
+            key: connection-string
+
+  - it: should prefer a literal MongoDB connection when both forms are configured
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: literal-mongo
+      global.coreServices.databases.mongodb.connectionStringSecretRef:
+        name: mongo-secret
+        key: connection-string
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[5].value
+          value: literal-mongo
+      - notExists:
+          path: spec.template.spec.containers[0].env[5].valueFrom
+
+  - it: should prefer the service MongoDB database name over the global name
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.databases.mongodb.databaseName: GlobalDb
+      coreServices.jober.databases.mongodb.databaseName: JoberDb
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[6].value
+          value: JoberDb
+
+  - it: should omit the MongoDB database name when neither level configures it
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.databases.mongodb.databaseName: ""
+      coreServices.jober.databases.mongodb.databaseName: ""
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].env[6]
+
+  - it: should use the configured minimum log level
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.minLogLevel: Warning
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[3].value
+          value: Warning
+
+  - it: should render the default image without a registry
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.registry: ""
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: webdatasource/jober:v2.1.0
+
+  - it: should apply all image overrides
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.registry: registry.example
+      coreServices.jober.image.name: example/custom-jober
+      coreServices.jober.image.tag: v9
+      coreServices.jober.image.pullPolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: registry.example/example/custom-jober:v9
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+
+  - it: should apply the replica override
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      coreServices.jober.replicaCount: 4
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 4
+
+  - it: should merge global and service deployment labels with service precedence
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.deploymentExtraLabels:
+        globalLabel: global
+        common: global
+      coreServices.jober.deploymentExtraLabelsOverride:
+        serviceLabel: service
+        common: service
+    asserts:
+      - equal:
+          path: metadata.labels.globalLabel
+          value: global
+      - equal:
+          path: metadata.labels.serviceLabel
+          value: service
+      - equal:
+          path: metadata.labels.common
+          value: service
+
+  - it: should prefer service resources over global resources
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      coreServices.jober.resourcesOverride:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 500m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 512Mi
+
+  - it: should use a service MongoDB database name when the global name is empty
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.databases.mongodb.databaseName: ""
+      coreServices.jober.databases.mongodb.databaseName: Jober
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[6].name
+          value: MONGODB_DATABASE_NAME
+      - equal:
+          path: spec.template.spec.containers[0].env[6].value
+          value: Jober
+
+  - it: should apply the global node selector
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.nodeSelector:
+        disktype: ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector.disktype
+          value: ssd
+
+  - it: should prefer the service node selector
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.nodeSelector:
+        disktype: ssd
+      coreServices.jober.nodeSelectorOverride:
+        disktype: hdd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector.disktype
+          value: hdd
+
+  - it: should apply global tolerations
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.tolerations:
+        - key: dedicated
+          operator: Equal
+          value: jober
+          effect: NoSchedule
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations[0].value
+          value: jober
+
+  - it: should prefer service tolerations
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.tolerations:
+        - key: dedicated
+          operator: Equal
+          value: jober
+          effect: NoSchedule
+      coreServices.jober.tolerationsOverride:
+        - key: special
+          operator: Exists
+          effect: NoExecute
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations[0].key
+          value: special
+      - equal:
+          path: spec.template.spec.tolerations[0].effect
+          value: NoExecute
+
+  - it: should apply global affinity
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: disktype
+                    operator: In
+                    values:
+                      - ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: disktype
+
+  - it: should prefer service affinity
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: disktype
+                    operator: In
+                    values:
+                      - ssd
+      coreServices.jober.affinityOverride:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - jober
+                topologyKey: kubernetes.io/hostname
+    asserts:
+      - notExists:
+          path: spec.template.spec.affinity.nodeAffinity
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
+          value: 100

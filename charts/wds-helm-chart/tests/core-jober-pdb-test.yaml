@@ -1,0 +1,70 @@
+suite: test core jober PDB
+templates:
+  - core-jober-pdb.yaml
+
+tests:
+  - it: should not render outside MultiService mode
+    set:
+      global.coreServices.mode: SingleService
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render when globally disabled
+    set:
+      global.coreServices.mode: MultiService
+      global.pdb.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render when disabled for Jober
+    set:
+      global.coreServices.mode: MultiService
+      coreServices.jober.pdb.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render in MultiService mode with PDB enabled
+    set:
+      global.coreServices.mode: MultiService
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: metadata.name
+          value: jober
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: jober
+      - equal:
+          path: spec.minAvailable
+          value: 1
+      - notExists:
+          path: spec.maxUnavailable
+
+  - it: should prefer service minAvailable when both disruption limits are set
+    set:
+      global.coreServices.mode: MultiService
+      coreServices.jober.pdb.minAvailable: 2
+      coreServices.jober.pdb.maxUnavailable: 1
+    asserts:
+      - equal:
+          path: spec.minAvailable
+          value: 2
+      - notExists:
+          path: spec.maxUnavailable
+
+  - it: should allow Jober to enable a PDB over the global default
+    set:
+      global.coreServices.mode: MultiService
+      global.pdb.enabled: false
+      coreServices.jober.pdb.enabled: true
+      coreServices.jober.pdb.minAvailable: 2
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.minAvailable
+          value: 2

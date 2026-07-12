@@ -1,0 +1,106 @@
+suite: test core jober HPA
+templates:
+  - core-jober-hpa.yaml
+
+tests:
+  - it: should not render outside MultiService mode
+    set:
+      global.coreServices.mode: SingleService
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render when globally disabled
+    set:
+      global.coreServices.mode: MultiService
+      global.hpa.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render when disabled for Jober
+    set:
+      global.coreServices.mode: MultiService
+      coreServices.jober.hpa.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render in MultiService mode with HPA enabled
+    set:
+      global.coreServices.mode: MultiService
+    asserts:
+      - isKind:
+          of: HorizontalPodAutoscaler
+      - equal:
+          path: metadata.name
+          value: jober
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: jober
+      - equal:
+          path: spec.minReplicas
+          value: 1
+      - equal:
+          path: spec.maxReplicas
+          value: 3
+      - equal:
+          path: spec.metrics[0].resource.name
+          value: cpu
+      - equal:
+          path: spec.metrics[0].resource.target.averageUtilization
+          value: 80
+      - notExists:
+          path: spec.metrics[1]
+
+  - it: should apply global CPU and memory targets
+    set:
+      global.coreServices.mode: MultiService
+      global.hpa.minReplicas: 2
+      global.hpa.maxReplicas: 6
+      global.hpa.targetCPUUtilizationPercentage: 75
+      global.hpa.targetMemoryUtilizationPercentage: 65
+    asserts:
+      - equal:
+          path: spec.minReplicas
+          value: 2
+      - equal:
+          path: spec.maxReplicas
+          value: 6
+      - equal:
+          path: spec.metrics[0].resource.target.averageUtilization
+          value: 75
+      - equal:
+          path: spec.metrics[1].resource.name
+          value: memory
+      - equal:
+          path: spec.metrics[1].resource.target.averageUtilization
+          value: 65
+
+  - it: should prefer all service HPA overrides
+    set:
+      global.coreServices.mode: MultiService
+      global.hpa.enabled: false
+      global.hpa.minReplicas: 1
+      global.hpa.maxReplicas: 3
+      global.hpa.targetCPUUtilizationPercentage: 80
+      coreServices.jober.hpa.enabled: true
+      coreServices.jober.hpa.minReplicas: 3
+      coreServices.jober.hpa.maxReplicas: 8
+      coreServices.jober.hpa.targetCPUUtilizationPercentage: 60
+      coreServices.jober.hpa.targetMemoryUtilizationPercentage: 50
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.minReplicas
+          value: 3
+      - equal:
+          path: spec.maxReplicas
+          value: 8
+      - equal:
+          path: spec.metrics[0].resource.target.averageUtilization
+          value: 60
+      - equal:
+          path: spec.metrics[1].resource.target.averageUtilization
+          value: 50

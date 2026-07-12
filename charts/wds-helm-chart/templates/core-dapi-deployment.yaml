@@ -4,6 +4,7 @@
     (dict "name" "DATAKEEPER_ORIGIN" "value" "http://datakeeper")
     (dict "name" "SCRAPER_ORIGIN" "value" "http://scraper")
     (dict "name" "IDEALER_ORIGIN" "value" "http://idealer")
+    (dict "name" "JOBER_ORIGIN" "value" "http://jober")
     (dict "name" "JOB_TYPES" "value" (join "," .Values.global.coreServices.jobTypes))
     (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
     (dict "name" "BASE_PATH" "value" .Values.global.ingress.basePath)
@@ -25,8 +26,9 @@
     {{- fail "Either coreServices.databases.mongodb.connectionString or coreServices.databases.mongodb.connectionStringSecretRef must be set when coreServices.mode is MultiService" }}
   {{- end }}
 
-  {{- if .Values.global.coreServices.databases.mongodb.databaseName }}
-    {{- $env = append $env (dict "name" "MONGODB_DATABASE_NAME" "value" (.Values.coreServices.dapi.databases.mongodb.databaseName | default .Values.global.coreServices.databases.mongodb.databaseName)) }}
+  {{- $databaseName := .Values.coreServices.dapi.databases.mongodb.databaseName | default .Values.global.coreServices.databases.mongodb.databaseName }}
+  {{- if $databaseName }}
+    {{- $env = append $env (dict "name" "MONGODB_DATABASE_NAME" "value" $databaseName) }}
   {{- end }}
 
   {{- if .Values.global.coreServices.exceptionResponseDelayMs }}
@@ -53,7 +55,8 @@
         "image" (.Values.coreServices.dapi.image.name | default "webdatasource/dapi")
         "tag" (.Values.coreServices.dapi.image.tag | default .Chart.AppVersion)
         "imagePullPolicy" (.Values.coreServices.dapi.image.pullPolicy | default "IfNotPresent")
-        "ports" (list (dict "name" "http" "containerPort" 8080) (dict "name" "health" "containerPort" 8080))
+        "resources" (.Values.coreServices.dapi.resourcesOverride | default .Values.global.resources)
+        "ports" (list (dict "name" "http" "containerPort" 8080) (dict "name" "health" "containerPort" 8080) (dict "name" "grpc-web" "containerPort" 8082))
         "env" $env
       )
     )

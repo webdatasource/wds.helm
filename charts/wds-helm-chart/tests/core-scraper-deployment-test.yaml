@@ -14,6 +14,7 @@ tests:
     set:
       global.coreServices.mode: MultiService
       global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
     asserts:
       - isKind:
           of: Deployment
@@ -22,6 +23,7 @@ tests:
     set:
       global.coreServices.mode: MultiService
       global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
     asserts:
       - isKind:
           of: Deployment
@@ -60,16 +62,36 @@ tests:
           value: 8080
       - equal:
           path: spec.template.spec.containers[0].env[0].name
-          value: MIN_LOG_LEVEL
+          value: IDEALER_ORIGIN
       - equal:
           path: spec.template.spec.containers[0].env[0].value
-          value: Information
+          value: http://idealer
       - equal:
           path: spec.template.spec.containers[0].env[1].name
-          value: LICENSE_KEY
+          value: MIN_LOG_LEVEL
       - equal:
           path: spec.template.spec.containers[0].env[1].value
+          value: Information
+      - equal:
+          path: spec.template.spec.containers[0].env[2].name
+          value: LICENSE_KEY
+      - equal:
+          path: spec.template.spec.containers[0].env[2].value
           value: test
+      - equal:
+          path: spec.template.spec.containers[0].env[3].name
+          value: MONGODB_CONNECTION_STRING
+      - equal:
+          path: spec.template.spec.containers[0].env[3].value
+          value: test
+      - equal:
+          path: spec.template.spec.containers[0].env[4].name
+          value: MONGODB_DATABASE_NAME
+      - equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: WebDataSource
+      - notExists:
+          path: spec.template.spec.containers[0].env[5]
       - notExists:
           path: spec.template.spec.nodeSelector
       - notExists:
@@ -81,6 +103,7 @@ tests:
     set:
       global.coreServices.mode: MultiService
       global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
       global.registry: ""
     asserts:
     - matchRegex:
@@ -91,6 +114,7 @@ tests:
     set:
       global.coreServices.mode: MultiService
       global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
       global.registry: custom.registry
       coreServices.scraper.image.name: org/custom-scraper
       coreServices.scraper.image.tag: v9
@@ -110,23 +134,25 @@ tests:
       global.coreServices.license.keySecretRef:
         name: license-secret
         key: license-key
+      global.coreServices.databases.mongodb.connectionString: test
     asserts:
       - isKind:
           of: Deployment
       - equal:
-          path: spec.template.spec.containers[0].env[1].name
+          path: spec.template.spec.containers[0].env[2].name
           value: LICENSE_KEY
       - equal:
-          path: spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.name
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
           value: license-secret
       - equal:
-          path: spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.key
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.key
           value: license-key
 
   - it: should respect replicaCount override
     set:
       global.coreServices.mode: MultiService
       global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
       coreServices.scraper.replicaCount: 3
     asserts:
       - equal:
@@ -137,6 +163,7 @@ tests:
     set:
       global.coreServices.mode: MultiService
       global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
       global.deploymentExtraLabels:
         globalLabel: g
         common: global
@@ -158,6 +185,7 @@ tests:
     set:
       global.coreServices.mode: MultiService
       global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
       global.nodeSelector:
         disktype: ssd
     asserts:
@@ -169,6 +197,7 @@ tests:
     set:
       global.coreServices.mode: MultiService
       global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
       global.nodeSelector:
         disktype: ssd
       coreServices.scraper.nodeSelectorOverride:
@@ -182,6 +211,7 @@ tests:
     set:
       global.coreServices.mode: MultiService
       global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
       global.tolerations:
         - key: dedicated
           operator: Equal
@@ -205,6 +235,7 @@ tests:
     set:
       global.coreServices.mode: MultiService
       global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
       global.tolerations:
         - key: dedicated
           operator: Equal
@@ -229,6 +260,7 @@ tests:
     set:
       global.coreServices.mode: MultiService
       global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
       global.affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -250,6 +282,7 @@ tests:
     set:
       global.coreServices.mode: MultiService
       global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
       global.affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -277,3 +310,97 @@ tests:
       - equal:
           path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
           value: 100
+
+  - it: should prefer service resources over global resources
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      coreServices.scraper.resourcesOverride:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 500m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 512Mi
+
+  - it: should use a service MongoDB database name when the global name is empty
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.databases.mongodb.databaseName: ""
+      coreServices.scraper.databases.mongodb.databaseName: Scraper
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONGODB_DATABASE_NAME
+            value: Scraper
+
+  - it: should fail without a MongoDB connection string
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: ""
+      global.coreServices.databases.mongodb.connectionStringSecretRef: {}
+    asserts:
+      - failedTemplate:
+          errorMessage: Either coreServices.databases.mongodb.connectionString or coreServices.databases.mongodb.connectionStringSecretRef must be set when coreServices.mode is MultiService
+
+  - it: should support a MongoDB connection string secret reference
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: ""
+      global.coreServices.databases.mongodb.connectionStringSecretRef:
+        name: mongo-secret
+        key: connection-string
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef
+          value:
+            name: mongo-secret
+            key: connection-string
+
+  - it: should prefer a literal MongoDB connection when both forms are configured
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: literal-mongo
+      global.coreServices.databases.mongodb.connectionStringSecretRef:
+        name: mongo-secret
+        key: connection-string
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[3].value
+          value: literal-mongo
+      - notExists:
+          path: spec.template.spec.containers[0].env[3].valueFrom
+
+  - it: should prefer the service MongoDB database name over the global name
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.databases.mongodb.databaseName: GlobalDb
+      coreServices.scraper.databases.mongodb.databaseName: ScraperDb
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: ScraperDb
+
+  - it: should omit the MongoDB database name when neither level configures it
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.databases.mongodb.databaseName: ""
+      coreServices.scraper.databases.mongodb.databaseName: ""
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].env[4]

@@ -176,6 +176,25 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[12].value
           value: "$.embeddings"
+      - equal:
+          path: spec.template.spec.containers[0].env[13].name
+          value: EMBEDDING_VECTORS_LENGTH
+      - equal:
+          path: spec.template.spec.containers[0].env[13].value
+          value: "768"
+
+  - it: should set the embedding vector length from values when retrieval is enabled
+    set:
+      global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.search.enabled: true
+      global.coreServices.search.embeddingService.dimentionsCount: 1024
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EMBEDDING_VECTORS_LENGTH
+            value: "1024"
 
   - it: should not include embedding env vars and retrieval flag when retrieval disabled
     set:
@@ -426,3 +445,19 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[3].value
           value: /test/
+
+  - it: should prefer service resources over global resources
+    set:
+      global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
+      coreServices.solidstack.resourcesOverride:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 500m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 512Mi

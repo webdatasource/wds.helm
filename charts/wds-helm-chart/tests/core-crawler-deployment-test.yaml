@@ -40,6 +40,12 @@ tests:
           path: spec.template.spec.containers[0].ports[0].containerPort
           value: 8082
       - equal:
+          path: spec.template.spec.containers[0].ports[1].name
+          value: health
+      - equal:
+          path: spec.template.spec.containers[0].ports[1].containerPort
+          value: 8080
+      - equal:
           path: spec.template.spec.containers[0].livenessProbe.httpGet.path
           value: /health
       - equal:
@@ -302,5 +308,21 @@ tests:
       - equal:
           path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
           value: 100
+
+  - it: should prefer service resources over global resources
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      coreServices.crawler.resourcesOverride:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 500m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 512Mi
 
   

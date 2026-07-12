@@ -20,8 +20,9 @@
     {{- fail "Either coreServices.databases.mongodb.connectionString or coreServices.databases.mongodb.connectionStringSecretRef must be set when coreServices.mode is MultiService" }}
   {{- end }}
 
-  {{- if .Values.global.coreServices.databases.mongodb.databaseName }}
-    {{- $env = append $env (dict "name" "MONGODB_DATABASE_NAME" "value" (.Values.coreServices.idealer.databases.mongodb.databaseName | default .Values.global.coreServices.databases.mongodb.databaseName)) }}
+  {{- $databaseName := .Values.coreServices.idealer.databases.mongodb.databaseName | default .Values.global.coreServices.databases.mongodb.databaseName }}
+  {{- if $databaseName }}
+    {{- $env = append $env (dict "name" "MONGODB_DATABASE_NAME" "value" $databaseName) }}
   {{- end }}
 
 {{ include "wds-helm-chart.deployment" (dict
@@ -39,6 +40,7 @@
         "image" (.Values.coreServices.idealer.image.name | default "webdatasource/idealer")
         "tag" (.Values.coreServices.idealer.image.tag | default .Chart.AppVersion)
         "imagePullPolicy" (.Values.coreServices.idealer.image.pullPolicy | default "IfNotPresent")
+        "resources" (.Values.coreServices.idealer.resourcesOverride | default .Values.global.resources)
         "ports" (list (dict "name" "grpc-web" "containerPort" 8082) (dict "name" "health" "containerPort" 8080))
         "env" $env
       )

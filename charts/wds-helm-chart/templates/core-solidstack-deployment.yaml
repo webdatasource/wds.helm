@@ -56,6 +56,8 @@
     {{- if $emb.resultJsonPath }}
       {{- $env = append $env (dict "name" "EMBEDDING_SERVICE_RESULT_JSON_PATH" "value" $emb.resultJsonPath) }}
     {{- end }}
+
+    {{- $env = append $env (dict "name" "EMBEDDING_VECTORS_LENGTH" "value" $emb.dimentionsCount) }}
   {{- end }}
 
 {{ include "wds-helm-chart.deployment" (dict
@@ -73,6 +75,7 @@
         "image" (.Values.coreServices.solidstack.image.name | default "webdatasource/solidstack")
         "tag" (.Values.coreServices.solidstack.image.tag | default .Chart.AppVersion)
         "imagePullPolicy" (.Values.coreServices.solidstack.image.pullPolicy | default "IfNotPresent")
+        "resources" (.Values.coreServices.solidstack.resourcesOverride | default .Values.global.resources)
         "ports" (list (dict "name" "http" "containerPort" 8080))
         "env" $env
       )

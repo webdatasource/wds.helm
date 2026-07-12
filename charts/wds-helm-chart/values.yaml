@@ -21,7 +21,7 @@ global:
   coreServices:
     # Deployment mode. Values: "SingleService", "MultiService"
     # SingleService: only solidstack is deployed together with its service
-    # MultiService: all core services are deployed (dapi, datakeeper, crawler, scraper, idealer) together with their services
+    # MultiService: all core services are deployed (dapi, datakeeper, crawler, scraper, idealer, jober) together with their services
     mode: SingleService
     # License key to run application in the MultiService mode (use for a vault reference. For instance, https://github.com/bank-vaults/vault-secrets-webhook)
     license:
@@ -106,7 +106,7 @@ global:
     externalIpConfigs:
     - intranet # Reserved value to allow crawling for Intranet jobs.
     - amazon # The https://checkip.amazonaws.com is used to get a public IP address
-    # Defines how much time should be waited before responding with an HTTP error (in case of). Default value is 1 second
+    # Defines how much time should be waited before responding with an HTTP error (is applied to MsSqlApi only). Default value is 1 second
     exceptionResponseDelayMs: ""
     # Maximum inactive seconds to re-register crawler. Default value is 60 seconds
     maxInactiveSecToReregistrar: ""
@@ -115,7 +115,7 @@ global:
       # Whether to deploy docs service
       enabled: true
       # Docs image default tag. Its release cadence is different from other services because documentation is released more often
-      defaultTag: "v2.1"
+      defaultTag: "v3.0"
     playground:
       # Whether to deploy playground service
       enabled: true
@@ -136,7 +136,7 @@ global:
     # - Playground: http://your-domain/wds/playground
     # - etc.
     basePath: "/"
-  # Global Horizontal Pod Autoscaler defaults (can be overridden per service under <service>.hpa)
+  # Global Horizontal Pod Autoscaler defaults. Is applied only in MultiService mode. Can be overridden per service under <service>.hpa
   hpa:
     enabled: true
     # Default minimum number of replicas (used if service.hpa.minReplicas not set)
@@ -147,7 +147,7 @@ global:
     targetCPUUtilizationPercentage: 80
     # Target average Memory utilization percentage (optional; set to null to disable)
     targetMemoryUtilizationPercentage: null
-  # Global Pod Disruption Budget defaults (can be overridden per service under <service>.pdb)
+  # Global Pod Disruption Budget defaults. Is applied only in MultiService mode. Can be overridden per service under <service>.pdb
   pdb:
     enabled: true
     # Specify one of minAvailable or maxUnavailable. If both provided in a service override, minAvailable wins.
@@ -174,7 +174,6 @@ coreServices:
     tolerationsOverride: []
     # Override global.affinity for this service
     affinityOverride: {}
-    # HPA/PDB intentionally not supported for solidstack (SingleService mode)
   dapi:
     # Number of pod replicas
     replicaCount: 2
@@ -265,6 +264,10 @@ coreServices:
       tag: ""
       # Image pull policy (default: IfNotPresent)
       pullPolicy: ""
+    # Override global.config.coreServices.databases.mongodb.databaseName for this service
+    databases:
+      mongodb:
+        databaseName: ""
     # Override global.resources for this service
     resourcesOverride: {}
     # Override global.deploymentExtraLabels 
@@ -280,6 +283,34 @@ coreServices:
     hpa: {}
     pdb: {}
   idealer:
+    # Number of pod replicas
+    replicaCount: 2
+    image:
+      # Image name (repository/name)
+      name: ""
+      # Image tag (default: .Chart.AppVersion)
+      tag: ""
+      # Image pull policy (default: IfNotPresent)
+      pullPolicy: ""
+    # Override global.config.coreServices.databases.mongodb.databaseName for this service
+    databases:
+      mongodb:
+        databaseName: ""
+    # Override global.resources for this service
+    resourcesOverride: {}
+    # Override global.deploymentExtraLabels 
+    deploymentExtraLabelsOverride: {}
+    # Override global.serviceExtraLabels for this service
+    serviceExtraLabelsOverride: {}
+    # Override global.nodeSelector for this service
+    nodeSelectorOverride: {}
+    # Override global.tolerations for this service
+    tolerationsOverride: []
+    # Override global.affinity for this service
+    affinityOverride: {}
+    hpa: {}
+    pdb: {}
+  jober:
     # Number of pod replicas
     replicaCount: 2
     image:

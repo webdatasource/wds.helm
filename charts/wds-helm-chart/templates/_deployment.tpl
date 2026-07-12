@@ -42,6 +42,10 @@ spec:
           image: {{ $c.image }}:{{ $c.tag }}
           {{- end }}
           imagePullPolicy: {{ $c.imagePullPolicy }}
+          {{- if $c.resources }}
+          resources:
+            {{- toYaml $c.resources | nindent 12 }}
+          {{- end }}
           {{- if $c.command }}
           command:
             {{- range $c.command }}

@@ -34,7 +34,8 @@
         "image" (.Values.coreServices.crawler.image.name | default "webdatasource/crawler")
         "tag" (.Values.coreServices.crawler.image.tag | default .Chart.AppVersion)
         "imagePullPolicy" (.Values.coreServices.crawler.image.pullPolicy | default "IfNotPresent")
-        "ports" (list (dict "name" "grpc-web" "containerPort" 8082))
+        "resources" (.Values.coreServices.crawler.resourcesOverride | default .Values.global.resources)
+        "ports" (list (dict "name" "grpc-web" "containerPort" 8082) (dict "name" "health" "containerPort" 8080))
         "env" $env
       )
     )

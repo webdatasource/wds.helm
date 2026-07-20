@@ -1,7 +1,9 @@
 {{- if eq .Values.global.coreServices.mode "MultiService" }}
-  {{- $name := "scraper" }}
+  {{- $name := "jober" }}
   {{- $env := list
-    (dict "name" "IDEALER_ORIGIN" "value" "http://idealer")
+    (dict "name" "DATAKEEPER_ORIGIN" "value" "http://datakeeper")
+    (dict "name" "SCRAPER_ORIGIN" "value" "http://scraper")
+    (dict "name" "DAPI_ORIGIN" "value" "http://dapi")
     (dict "name" "MIN_LOG_LEVEL" "value" .Values.global.minLogLevel)
   }}
 
@@ -14,14 +16,14 @@
   {{- end }}
 
   {{- if .Values.global.coreServices.databases.mongodb.connectionString }}
-    {{- $env = append $env (dict "name" "MONGODB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString ) }}
+    {{- $env = append $env (dict "name" "MONGODB_CONNECTION_STRING" "value" .Values.global.coreServices.databases.mongodb.connectionString) }}
   {{- else if .Values.global.coreServices.databases.mongodb.connectionStringSecretRef }}
     {{- $env = append $env (dict "name" "MONGODB_CONNECTION_STRING" "valueFrom" (dict "secretKeyRef" (dict "name" .Values.global.coreServices.databases.mongodb.connectionStringSecretRef.name "key" .Values.global.coreServices.databases.mongodb.connectionStringSecretRef.key))) }}
   {{- else }}
     {{- fail "Either coreServices.databases.mongodb.connectionString or coreServices.databases.mongodb.connectionStringSecretRef must be set when coreServices.mode is MultiService" }}
   {{- end }}
 
-  {{- $databaseName := .Values.coreServices.scraper.databases.mongodb.databaseName | default .Values.global.coreServices.databases.mongodb.databaseName }}
+  {{- $databaseName := .Values.coreServices.jober.databases.mongodb.databaseName | default .Values.global.coreServices.databases.mongodb.databaseName }}
   {{- if $databaseName }}
     {{- $env = append $env (dict "name" "MONGODB_DATABASE_NAME" "value" $databaseName) }}
   {{- end }}
@@ -29,19 +31,19 @@
   {{ include "wds-helm-chart.deployment" (dict
     "ctx" .
     "name" $name
-    "labels" (merge (default (dict) .Values.coreServices.scraper.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels))
-    "replicas" (.Values.coreServices.scraper.replicaCount | default 2)
-    "nodeSelector" (.Values.coreServices.scraper.nodeSelectorOverride | default .Values.global.nodeSelector)
-    "tolerations" (.Values.coreServices.scraper.tolerationsOverride | default .Values.global.tolerations)
-    "affinity" (.Values.coreServices.scraper.affinityOverride | default .Values.global.affinity)
+    "labels" (merge (default (dict) .Values.coreServices.jober.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels))
+    "replicas" (.Values.coreServices.jober.replicaCount | default 2)
+    "nodeSelector" (.Values.coreServices.jober.nodeSelectorOverride | default .Values.global.nodeSelector)
+    "tolerations" (.Values.coreServices.jober.tolerationsOverride | default .Values.global.tolerations)
+    "affinity" (.Values.coreServices.jober.affinityOverride | default .Values.global.affinity)
     "containers" (list
       (dict
-        "name" "scraper"
+        "name" $name
         "registry" .Values.global.registry
-        "image" (.Values.coreServices.scraper.image.name | default "webdatasource/scraper")
-        "tag" (.Values.coreServices.scraper.image.tag | default .Chart.AppVersion)
-        "imagePullPolicy" (.Values.coreServices.scraper.image.pullPolicy | default "IfNotPresent")
-        "resources" (.Values.coreServices.scraper.resourcesOverride | default .Values.global.resources)
+        "image" (.Values.coreServices.jober.image.name | default "webdatasource/jober")
+        "tag" (.Values.coreServices.jober.image.tag | default .Chart.AppVersion)
+        "imagePullPolicy" (.Values.coreServices.jober.image.pullPolicy | default "IfNotPresent")
+        "resources" (.Values.coreServices.jober.resourcesOverride | default .Values.global.resources)
         "ports" (list (dict "name" "grpc-web" "containerPort" 8082) (dict "name" "health" "containerPort" 8080))
         "env" $env
       )

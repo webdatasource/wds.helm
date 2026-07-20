@@ -1,74 +1,66 @@
-suite: test dapi service
+suite: test core jober service
 templates:
-  - core-dapi-service.yaml
+  - core-jober-service.yaml
 
 tests:
-  - it: should not render when mode != MultiService
+  - it: should not render outside MultiService mode
     set:
       global.coreServices.mode: SingleService
     asserts:
       - hasDocuments:
           count: 0
 
-  - it: should render with defaults
+  - it: should render in MultiService mode
     set:
       global.coreServices.mode: MultiService
     asserts:
       - isKind:
           of: Service
       - equal:
-          path: spec.ports[0].name
-          value: http
-      - equal:
-          path: spec.ports[0].port
-          value: 80
-      - equal:
-          path: spec.ports[0].targetPort
-          value: http
-      - equal:
-          path: spec.ports[1].name
-          value: health
-      - equal:
-          path: spec.ports[1].port
-          value: 8080
-      - equal:
-          path: spec.ports[1].targetPort
-          value: health
+          path: metadata.name
+          value: jober
       - equal:
           path: metadata.labels.app
-          value: dapi
+          value: jober
       - equal:
           path: spec.selector.app
-          value: dapi
-      - contains:
-          path: spec.ports
-          content:
+          value: jober
+      - equal:
+          path: spec.ports[0]
+          value:
             name: grpc-web
             port: 8082
             targetPort: grpc-web
             protocol: TCP
+      - equal:
+          path: spec.ports[1]
+          value:
+            name: health
+            port: 8080
+            targetPort: health
+            protocol: TCP
 
-  - it: should merge global and service serviceExtraLabels
+  - it: should merge global and service labels with service precedence
     set:
       global.coreServices.mode: MultiService
       global.serviceExtraLabels:
-        globalLabel: g
+        globalLabel: global
         common: global
-      coreServices.dapi.serviceExtraLabelsOverride:
-        serviceLabel: s
+      coreServices.jober.serviceExtraLabelsOverride:
+        serviceLabel: service
         common: service
     asserts:
       - equal:
           path: metadata.labels.globalLabel
-          value: g
+          value: global
       - equal:
           path: metadata.labels.serviceLabel
-          value: s
+          value: service
       - equal:
           path: metadata.labels.common
           value: service
 
-  - it: should include shared chart labels and selector labels
+  - it: should include shared labels and selectors
     set:
       global.coreServices.mode: MultiService
     asserts:

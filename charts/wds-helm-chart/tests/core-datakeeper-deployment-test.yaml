@@ -421,3 +421,34 @@ tests:
       - equal:
           path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
           value: 100
+
+  - it: should prefer service resources over global resources
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      coreServices.datakeeper.resourcesOverride:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 500m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 512Mi
+
+  - it: should use a service MongoDB database name when the global name is empty
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.databases.mongodb.databaseName: ""
+      coreServices.datakeeper.databases.mongodb.databaseName: Datakeeper
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONGODB_DATABASE_NAME
+            value: Datakeeper

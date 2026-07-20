@@ -341,3 +341,34 @@ tests:
           value: literal-mongo
       - notExists:
           path: spec.template.spec.containers[0].env[2].valueFrom
+
+  - it: should prefer service resources over global resources
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      coreServices.idealer.resourcesOverride:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 500m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 512Mi
+
+  - it: should use a service MongoDB database name when the global name is empty
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.databases.mongodb.databaseName: ""
+      coreServices.idealer.databases.mongodb.databaseName: Idealer
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONGODB_DATABASE_NAME
+            value: Idealer

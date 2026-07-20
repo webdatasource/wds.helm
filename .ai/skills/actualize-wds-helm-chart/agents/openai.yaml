@@ -1,0 +1,4 @@
+interface:
+  display_name: "Actualize WDS Helm Chart"
+  short_description: "Sync, test, and package the WDS Helm chart"
+  default_prompt: "Use $actualize-wds-helm-chart to reconcile the Helm chart with the current WDS .Web projects, verify it, and build a deployable local package."

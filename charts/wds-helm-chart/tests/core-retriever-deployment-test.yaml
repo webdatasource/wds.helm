@@ -29,6 +29,17 @@ tests:
       - isKind:
           of: Deployment
 
+  - it: should use the Compose image repository by default
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: docker.io/webdatasource/retriever:v3.0.0
+
   - it: should render with defaults
     set:
       global.coreServices.mode: MultiService
@@ -107,8 +118,12 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[5].value
           value: WebDataSource
-      - notExists:
-          path: spec.template.spec.containers[0].env[6]
+      - equal:
+          path: spec.template.spec.containers[0].env[6].name
+          value: EMBEDDING_VECTORS_LENGTH
+      - equal:
+          path: spec.template.spec.containers[0].env[6].value
+          value: "768"
       - notExists:
           path: spec.template.spec.nodeSelector
       - notExists:
@@ -130,6 +145,20 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[2].value
           value: Vector
+
+  - it: should set the embedding vector length from values
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.search.embeddingService.dimentionsCount: 1024
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EMBEDDING_VECTORS_LENGTH
+            value: "1024"
 
   - it: should support license.keySecretRef
     set:
@@ -559,3 +588,36 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[7].value
           value: SearchDB3
+
+  - it: should prefer service resources over global resources
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      coreServices.retriever.resourcesOverride:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 500m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 512Mi
+
+  - it: should use a service MongoDB database name when the global name is empty
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.search.enabled: true
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.databases.mongodb.databaseName: ""
+      coreServices.retriever.databases.mongodb.databaseName: Retriever
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MONGODB_DATABASE_NAME
+            value: Retriever

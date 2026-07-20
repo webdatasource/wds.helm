@@ -1,0 +1,14 @@
+{{- if eq .Values.global.coreServices.mode "MultiService" }}
+  {{- $name := "jober" }}
+  {{- $params := include "dictAddMissing" (list .Values.coreServices.jober.hpa .Values.global.hpa) | fromYaml -}}
+  {{- if $params.enabled }}
+    {{ include "wds-helm-chart.hpa" (dict
+      "ctx" .
+      "name" $name
+      "minReplicas" $params.minReplicas
+      "maxReplicas" $params.maxReplicas
+      "cpu" $params.targetCPUUtilizationPercentage
+      "memory" $params.targetMemoryUtilizationPercentage
+    ) }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,12 @@
+{{- if eq .Values.global.coreServices.mode "MultiService" }}
+  {{- $name := "jober" }}
+  {{- $params := include "dictAddMissing" (list .Values.coreServices.jober.pdb .Values.global.pdb) | fromYaml -}}
+  {{- if $params.enabled }}
+    {{ include "wds-helm-chart.pdb" (dict
+      "ctx" .
+      "name" $name
+      "minAvailable" $params.minAvailable
+      "maxUnavailable" $params.maxUnavailable
+    ) }}
+  {{- end }}
+{{- end }}

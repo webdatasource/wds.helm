@@ -21,8 +21,9 @@
     {{- fail "Either coreServices.databases.mongodb.connectionString or coreServices.databases.mongodb.connectionStringSecretRef must be set when coreServices.mode is MultiService" }}
   {{- end }}
 
-  {{- if .Values.global.coreServices.databases.mongodb.databaseName }}
-    {{- $env = append $env (dict "name" "MONGODB_DATABASE_NAME" "value" (.Values.coreServices.datakeeper.databases.mongodb.databaseName | default .Values.global.coreServices.databases.mongodb.databaseName)) }}
+  {{- $databaseName := .Values.coreServices.datakeeper.databases.mongodb.databaseName | default .Values.global.coreServices.databases.mongodb.databaseName }}
+  {{- if $databaseName }}
+    {{- $env = append $env (dict "name" "MONGODB_DATABASE_NAME" "value" $databaseName) }}
   {{- end }}
 
   {{- if .Values.global.coreServices.cache.connectionString }}
@@ -50,6 +51,7 @@
         "image" (.Values.coreServices.datakeeper.image.name | default "webdatasource/datakeeper")
         "tag" (.Values.coreServices.datakeeper.image.tag | default .Chart.AppVersion)
         "imagePullPolicy" (.Values.coreServices.datakeeper.image.pullPolicy | default "IfNotPresent")
+        "resources" (.Values.coreServices.datakeeper.resourcesOverride | default .Values.global.resources)
         "ports" (list (dict "name" "grpc-web-dk" "containerPort" 8082) (dict "name" "grpc-web-rm" "containerPort" 8083) (dict "name" "health" "containerPort" 8080))
         "env" $env
       )

@@ -38,7 +38,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: docker.io/webdatasource/retriever:v2.1.0
+          value: docker.io/webdatasource/retriever:v3.0.0
 
   - it: should render with defaults
     set:

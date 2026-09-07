@@ -42,6 +42,7 @@
 
   {{ include "wds-helm-chart.deployment" (dict
     "ctx" .
+    "fips" (.Values.global.coreServices.compliance | default dict).fips
     "name" $name
     "labels" (merge (default (dict) .Values.coreServices.dapi.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels))
     "replicas" (.Values.coreServices.dapi.replicaCount | default 2)

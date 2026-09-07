@@ -287,3 +287,14 @@ tests:
       - equal:
           path: spec.template.spec.containers[1].resources.requests.cpu
           value: 500m
+
+  - it: should keep the image name when core FIPS is enabled
+    set:
+      global.coreServices.compliance.fips: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^docker\.io/webdatasource/playground:v\d+\.\d+\.\d+$
+      - matchRegex:
+          path: spec.template.spec.containers[1].image
+          pattern: ^docker\.io/webdatasource/playground:v\d+\.\d+\.\d+$

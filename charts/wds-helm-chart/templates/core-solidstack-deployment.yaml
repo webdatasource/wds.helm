@@ -62,6 +62,7 @@
 
 {{ include "wds-helm-chart.deployment" (dict
     "ctx" .
+    "fips" (.Values.global.coreServices.compliance | default dict).fips
     "name" "solidstack"
     "labels" (merge (default (dict) .Values.coreServices.solidstack.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels))
     "replicas" "1"

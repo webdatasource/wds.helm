@@ -110,6 +110,10 @@ global:
     exceptionResponseDelayMs: ""
     # Maximum inactive seconds to re-register crawler. Default value is 60 seconds
     maxInactiveSecToReregistrar: ""
+    # Compliance settings applied to core services.
+    compliance:
+      # Run core services on FIPS compliant images (amd64 only). Docs and playground are unaffected.
+      fips: false
   auxiliaryServices:
     docs:
       # Whether to deploy docs service

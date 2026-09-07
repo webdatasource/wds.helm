@@ -427,3 +427,14 @@ tests:
       - equal:
           path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
           value: 100
+
+  - it: should suffix the image name when FIPS is enabled
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.license.key: test
+      global.coreServices.compliance.fips: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^docker\.io/webdatasource/jober-fips:v\d+\.\d+\.\d+$

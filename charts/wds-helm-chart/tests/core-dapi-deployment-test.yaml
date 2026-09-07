@@ -3,6 +3,17 @@ templates:
   - core-dapi-deployment.yaml
 
 tests:
+  - it: should suffix the image name when FIPS is enabled
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.license.key: test
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.compliance.fips: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^docker\.io/webdatasource/dapi-fips:v\d+\.\d+\.\d+$
+
   - it: should not render when mode != MultiService
     set:
       global.coreServices.mode: SingleService
@@ -482,3 +493,61 @@ tests:
           content:
             name: MONGODB_DATABASE_NAME
             value: Dapi
+
+  - it: should keep the image name when FIPS is disabled
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.license.key: test
+      global.coreServices.compliance.fips: false
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^docker\.io/webdatasource/dapi:v\d+\.\d+\.\d+$
+
+  - it: should keep the image name when FIPS is unset
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.license.key: test
+      global.coreServices.compliance.fips: null
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^docker\.io/webdatasource/dapi:v\d+\.\d+\.\d+$
+
+  - it: should respect image overrides with FIPS true and a registry
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.license.key: test
+      global.coreServices.compliance.fips: true
+      global.registry: "custom.registry:5000"
+      coreServices.dapi.image.name: org/custom-dapi
+      coreServices.dapi.image.tag: v9
+      coreServices.dapi.image.pullPolicy: Never
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: custom.registry:5000/org/custom-dapi-fips:v9
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Never
+
+  - it: should respect image overrides with FIPS true and no registry
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.license.key: test
+      global.coreServices.compliance.fips: true
+      global.registry: ""
+      coreServices.dapi.image.name: org/custom-dapi
+      coreServices.dapi.image.tag: v9
+      coreServices.dapi.image.pullPolicy: Never
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: org/custom-dapi-fips:v9
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Never

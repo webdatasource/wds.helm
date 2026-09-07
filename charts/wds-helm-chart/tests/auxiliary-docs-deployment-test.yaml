@@ -233,3 +233,11 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].resources.requests.memory
           value: 512Mi
+
+  - it: should keep the image name when core FIPS is enabled
+    set:
+      global.coreServices.compliance.fips: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^docker\.io/webdatasource/docs:v\d+\.\d+$

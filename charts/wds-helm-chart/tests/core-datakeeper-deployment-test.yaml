@@ -452,3 +452,14 @@ tests:
           content:
             name: MONGODB_DATABASE_NAME
             value: Datakeeper
+
+  - it: should suffix the image name when FIPS is enabled
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.license.key: test
+      global.coreServices.compliance.fips: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^docker\.io/webdatasource/datakeeper-fips:v\d+\.\d+\.\d+$

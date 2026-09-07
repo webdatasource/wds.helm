@@ -1,4 +1,8 @@
 {{- define "wds-helm-chart.deployment" }}
+{{- $imageSuffix := "" }}
+{{- if .fips }}
+  {{- $imageSuffix = "-fips" }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -37,9 +41,9 @@ spec:
         {{- range $c := .containers }}
         - name: {{ $c.name }}
           {{- if $c.registry }}
-          image: {{ $c.registry }}/{{ $c.image }}:{{ $c.tag }}
+          image: {{ $c.registry }}/{{ $c.image }}{{ $imageSuffix }}:{{ $c.tag }}
           {{- else }}
-          image: {{ $c.image }}:{{ $c.tag }}
+          image: {{ $c.image }}{{ $imageSuffix }}:{{ $c.tag }}
           {{- end }}
           imagePullPolicy: {{ $c.imagePullPolicy }}
           {{- if $c.resources }}

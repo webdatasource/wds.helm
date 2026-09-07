@@ -30,6 +30,7 @@
 
   {{ include "wds-helm-chart.deployment" (dict
     "ctx" .
+    "fips" (.Values.global.coreServices.compliance | default dict).fips
     "name" $name
     "labels" (merge (default (dict) .Values.coreServices.jober.deploymentExtraLabelsOverride) (default (dict) .Values.global.deploymentExtraLabels))
     "replicas" (.Values.coreServices.jober.replicaCount | default 2)

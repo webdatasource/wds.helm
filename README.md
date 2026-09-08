@@ -295,6 +295,7 @@ Set chart configuration in [values.yaml](https://github.com/webdatasource/wds.he
 | `global.coreServices.externalIpConfigs` | `[intranet, amazon]` | Enabled [external IP configurations](https://webdatasource.com/releases/latest/server/services/crawler.html#external-ip-getter-services). |
 | `global.coreServices.exceptionResponseDelayMs` | Empty; application fallback `1000` ms | Delay before an HTTP error response; applies to the MSSQL API. |
 | `global.coreServices.maxInactiveSecToReregistrar` | Empty; application fallback `60` seconds | Maximum Crawler inactivity before re-registration. |
+| `global.coreServices.compliance.fips` | false | Run core services on FIPS compliant images (amd64 only). Docs and playground are unaffected. |
 | `global.auxiliaryServices.docs.enabled` | `true` | Deploys the Docs auxiliary service. |
 | `global.auxiliaryServices.docs.defaultTag` | `v3.0` | Docs image tag used when `auxiliaryServices.docs.image.tag` is empty. |
 | `global.auxiliaryServices.playground.enabled` | `true` | Deploys the Playground auxiliary service. |

@@ -153,6 +153,7 @@ All four resource templates must have corresponding unit-test suites. At minimum
 - Do not bump `Chart.yaml` versions, create tags, or rebuild `.tgz` packages unless the task explicitly includes a release.
 - When intentionally releasing, keep `Chart.yaml.version`, `Chart.yaml.appVersion`, image-tag defaults, documentation, and packaged artifacts consistent with the requested release scope.
 - Update `charts/wds-helm-chart/README.md` when a user-facing value or behavior changes. Keep `values.yaml` comments accurate as part of the same change.
+- Whenever the root `README.md` is updated, update `charts/wds-helm-chart/README.md` in the same change so shared installation instructions, configuration, defaults, examples, and upgrade guidance stay consistent. Keep the chart README standalone and focused on using the chart; adapt relevant content rather than copying repository-only material.
 - A pushed `v*` tag invokes the chart-releaser workflow; creating or pushing a tag is a release action and requires explicit authorization.
 
 ## Definition of done

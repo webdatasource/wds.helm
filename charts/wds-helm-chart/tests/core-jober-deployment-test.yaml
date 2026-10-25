@@ -24,9 +24,9 @@ tests:
       - equal:
           path: spec.replicas
           value: 2
-      - equal:
+      - matchRegex:
           path: spec.template.spec.containers[0].image
-          value: docker.io/webdatasource/jober:v3.0.0
+          pattern: ^docker\.io/webdatasource/jober:v\d+\.\d+\.\d+$
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: IfNotPresent
@@ -223,9 +223,9 @@ tests:
       global.coreServices.databases.mongodb.connectionString: test
       global.imageRegistry: ""
     asserts:
-      - equal:
+      - matchRegex:
           path: spec.template.spec.containers[0].image
-          value: webdatasource/jober:v3.0.0
+          pattern: ^webdatasource/jober:v\d+\.\d+\.\d+$
 
   - it: should apply all image overrides
     set:

@@ -114,6 +114,8 @@ global:
     compliance:
       # Run core services on FIPS compliant images (amd64 only). Docs and playground are unaffected.
       fips: false
+    # Hash mode for ID sources, passed as SOURCE_HASH_MODE to Solidstack and Idealer. Options: "FullLength", "Sha512", "Raw".
+    idSourceHashMode: "FullLength"
   auxiliaryServices:
     docs:
       # Whether to deploy docs service

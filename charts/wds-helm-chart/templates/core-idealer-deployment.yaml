@@ -25,6 +25,8 @@
     {{- $env = append $env (dict "name" "MONGODB_DATABASE_NAME" "value" $databaseName) }}
   {{- end }}
 
+  {{- $env = append $env (dict "name" "SOURCE_HASH_MODE" "value" .Values.global.coreServices.idSourceHashMode) }}
+
 {{ include "wds-helm-chart.deployment" (dict
     "ctx" .
     "fips" (.Values.global.coreServices.compliance | default dict).fips

@@ -84,8 +84,11 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[3].value
           value: WebDataSource
-      - notExists:
-          path: spec.template.spec.containers[0].env[4]
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SOURCE_HASH_MODE
+            value: FullLength
 
   - it: should support license.keySecretRef
     set:
@@ -440,3 +443,69 @@ tests:
       - matchRegex:
           path: spec.template.spec.containers[0].image
           pattern: ^webdatasource/idealer:v\d+\.\d+\.\d+$
+
+  - it: should set SOURCE_HASH_MODE when idSourceHashMode is explicit FullLength
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.license.key: test
+      global.coreServices.idSourceHashMode: FullLength
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SOURCE_HASH_MODE
+            value: FullLength
+
+  - it: should set SOURCE_HASH_MODE when idSourceHashMode is Sha512
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.license.key: test
+      global.coreServices.idSourceHashMode: Sha512
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SOURCE_HASH_MODE
+            value: Sha512
+
+  - it: should set SOURCE_HASH_MODE when idSourceHashMode is Raw with search enabled
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.license.key: test
+      global.coreServices.search.enabled: true
+      global.coreServices.idSourceHashMode: Raw
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SOURCE_HASH_MODE
+            value: Raw
+
+  - it: should set SOURCE_HASH_MODE when idSourceHashMode is unset
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.license.key: test
+      global.coreServices.idSourceHashMode: null
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SOURCE_HASH_MODE
+            value: null
+
+  - it: should set SOURCE_HASH_MODE when idSourceHashMode is empty
+    set:
+      global.coreServices.mode: MultiService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.license.key: test
+      global.coreServices.idSourceHashMode: ""
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SOURCE_HASH_MODE
+            value: ""

@@ -60,6 +60,8 @@
     {{- $env = append $env (dict "name" "EMBEDDING_VECTORS_LENGTH" "value" $emb.dimentionsCount) }}
   {{- end }}
 
+  {{- $env = append $env (dict "name" "SOURCE_HASH_MODE" "value" .Values.global.coreServices.idSourceHashMode) }}
+
 {{ include "wds-helm-chart.deployment" (dict
     "ctx" .
     "fips" (.Values.global.coreServices.compliance | default dict).fips

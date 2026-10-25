@@ -94,6 +94,11 @@ tests:
           path: spec.template.spec.tolerations
       - notExists:
           path: spec.template.spec.affinity
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SOURCE_HASH_MODE
+            value: FullLength
 
   - it: should set SEARCH_MODE from values
     set:
@@ -207,18 +212,41 @@ tests:
       global.coreServices.search.embeddingService.contentJsonPath: "$.input"
       global.coreServices.search.embeddingService.resultJsonPath: "$.embeddings"
     asserts:
-      - notExists:
-          path: spec.template.spec.containers[0].env[7]
-      - notExists:
-          path: spec.template.spec.containers[0].env[8]
-      - notExists:
-          path: spec.template.spec.containers[0].env[9]
-      - notExists:
-          path: spec.template.spec.containers[0].env[10]
-      - notExists:
-          path: spec.template.spec.containers[0].env[11]
-      - notExists:
-          path: spec.template.spec.containers[0].env[12]
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FEATURE_FLAG_RETRIEVAL_ENABLED
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EMBEDDING_SERVICE_URL
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EMBEDDING_SERVICE_API_KEY
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EMBEDDING_SERVICE_REQUEST_TEMPLATE
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EMBEDDING_SERVICE_CONTENT_JSON_PATH
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EMBEDDING_SERVICE_RESULT_JSON_PATH
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EMBEDDING_VECTORS_LENGTH
+          any: true
 
   - it: should support mongodb.connectionStringSecretRef
     set:
@@ -524,3 +552,64 @@ tests:
       - matchRegex:
           path: spec.template.spec.containers[0].image
           pattern: ^webdatasource/solidstack:v\d+\.\d+\.\d+$
+
+  - it: should set SOURCE_HASH_MODE when idSourceHashMode is explicit FullLength
+    set:
+      global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.idSourceHashMode: FullLength
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SOURCE_HASH_MODE
+            value: FullLength
+
+  - it: should set SOURCE_HASH_MODE when idSourceHashMode is Sha512
+    set:
+      global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.idSourceHashMode: Sha512
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SOURCE_HASH_MODE
+            value: Sha512
+
+  - it: should set SOURCE_HASH_MODE when idSourceHashMode is Raw with search enabled
+    set:
+      global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.search.enabled: true
+      global.coreServices.idSourceHashMode: Raw
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SOURCE_HASH_MODE
+            value: Raw
+
+  - it: should set SOURCE_HASH_MODE when idSourceHashMode is unset
+    set:
+      global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.idSourceHashMode: null
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SOURCE_HASH_MODE
+            value: null
+
+  - it: should set SOURCE_HASH_MODE when idSourceHashMode is empty
+    set:
+      global.coreServices.mode: SingleService
+      global.coreServices.databases.mongodb.connectionString: test
+      global.coreServices.idSourceHashMode: ""
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SOURCE_HASH_MODE
+            value: ""

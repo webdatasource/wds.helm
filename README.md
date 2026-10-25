@@ -26,12 +26,11 @@ helm repo add webdatasource https://webdatasource.github.io/wds.helm
 helm repo update
 
 # Search for the chart to verify it's available
-helm search repo webdatasource --version 1.4.0
+helm search repo webdatasource --version 1.6.0
 
 # Install the chart
-helm install wds-server --version 1.4.0 webdatasource/wds-helm-chart \
+helm install wds-server --version 1.6.0 webdatasource/wds-helm-chart \
     --namespace webdatasource --create-namespace \
-    --set global.registry="" \
     --set global.coreServices.databases.mongodb.connectionString="mongodb+srv://<user>:<password>@<host>/WebDataSource?appName=<cluster>&readPreference=secondary"
 ```
 
@@ -50,16 +49,16 @@ variable "mongodb_connection_string" {
   sensitive   = true
 }
 
-variable "registry" {
-  description = "Docker registry of WDS API Server service images"
+variable "image_registry" {
+  description = "Docker registry for all WDS images; use an empty string to omit the registry prefix"
   type        = string
-  default     = ""
+  default     = "docker.io"
 }
 
 variable "helm_chart_version" {
   description = "Helm chart version for WDS API Server deployment"
   type        = string
-  default     = "1.4.0"
+  default     = "1.6.0"
 }
 
 variable "create_namespace" {
@@ -101,7 +100,7 @@ resource "helm_release" "wds-server" {
   values = [
     yamlencode({
       global = {
-        registry = var.registry
+        imageRegistry = var.image_registry
         ingress = {
           enabled = var.enable_ingress
         }
@@ -156,16 +155,16 @@ variable "mongodb_connection_string" {
   sensitive   = true
 }
 
-variable "registry" {
-  description = "Docker registry of WDS API Server service images"
+variable "image_registry" {
+  description = "Docker registry for all WDS images; use an empty string to omit the registry prefix"
   type        = string
-  default     = ""
+  default     = "docker.io"
 }
 
 variable "helm_chart_version" {
   description = "Helm chart version for WDS API Server deployment"
   type        = string
-  default     = "1.4.0"
+  default     = "1.6.0"
 }
 
 variable "create_namespace" {
@@ -207,7 +206,7 @@ resource "helm_release" "wds-server" {
   values = [
     yamlencode({
       global = {
-        registry = var.registry
+        imageRegistry = var.image_registry
         ingress = {
           enabled = var.enable_ingress
         }
@@ -261,7 +260,7 @@ Set chart configuration in [values.yaml](https://github.com/webdatasource/wds.he
 
 | Path | Default or fallback | Description |
 | --- | --- | --- |
-| `global.registry` | `docker.io` | Registry prefix for every image. |
+| `global.imageRegistry` | `docker.io` | Registry prefix for every core and auxiliary image. Set an empty string to omit the prefix. |
 | `global.resources.requests.cpu` | `100m` | Default CPU request for each container. |
 | `global.resources.requests.memory` | `256Mi` | Default memory request for each container. |
 | `global.deploymentExtraLabels` | `{}` | Labels merged into every Deployment; a service override wins on duplicate keys. |
@@ -295,7 +294,8 @@ Set chart configuration in [values.yaml](https://github.com/webdatasource/wds.he
 | `global.coreServices.externalIpConfigs` | `[intranet, amazon]` | Enabled [external IP configurations](https://webdatasource.com/releases/latest/server/services/crawler.html#external-ip-getter-services). |
 | `global.coreServices.exceptionResponseDelayMs` | Empty; application fallback `1000` ms | Delay before an HTTP error response; applies to the MSSQL API. |
 | `global.coreServices.maxInactiveSecToReregistrar` | Empty; application fallback `60` seconds | Maximum Crawler inactivity before re-registration. |
-| `global.coreServices.compliance.fips` | false | Run core services on FIPS compliant images (amd64 only). Docs and playground are unaffected. |
+| `global.coreServices.compliance.fips` | `false` | Appends `-fips` to core service image names in both modes, including custom names (amd64 only). Docs and Playground image names are unaffected. |
+| `global.coreServices.idSourceHashMode` | `FullLength` | ID source hash mode for Solidstack and Idealer: `FullLength`, `Sha512`, or `Raw`. |
 | `global.auxiliaryServices.docs.enabled` | `true` | Deploys the Docs auxiliary service. |
 | `global.auxiliaryServices.docs.defaultTag` | `v3.0` | Docs image tag used when `auxiliaryServices.docs.image.tag` is empty. |
 | `global.auxiliaryServices.playground.enabled` | `true` | Deploys the Playground auxiliary service. |

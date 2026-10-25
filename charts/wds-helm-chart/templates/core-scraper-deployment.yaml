@@ -38,7 +38,7 @@
     "containers" (list
       (dict
         "name" "scraper"
-        "registry" .Values.global.registry
+        "registry" .Values.global.imageRegistry
         "image" (.Values.coreServices.scraper.image.name | default "webdatasource/scraper")
         "tag" (.Values.coreServices.scraper.image.tag | default .Chart.AppVersion)
         "imagePullPolicy" (.Values.coreServices.scraper.image.pullPolicy | default "IfNotPresent")

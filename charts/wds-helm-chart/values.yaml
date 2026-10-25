@@ -1,6 +1,6 @@
 global:
-  # Docker registry for all images
-  registry: docker.io
+  # Docker registry for all images. Set to an empty string to omit the registry prefix.
+  imageRegistry: docker.io
   # Default resource requests and limits for all services
   resources:
     requests:

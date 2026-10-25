@@ -14,7 +14,7 @@
     "containers" (list
       (dict
         "name" "internal"
-        "registry" .Values.global.registry
+        "registry" .Values.global.imageRegistry
         "image" $imageName
         "tag" $imageTag
         "imagePullPolicy" (.Values.auxiliaryServices.playground.image.pullPolicy | default "IfNotPresent")
@@ -31,7 +31,7 @@
       )
       (dict
         "name" "external"
-        "registry" .Values.global.registry
+        "registry" .Values.global.imageRegistry
         "image" $imageName
         "tag" $imageTag
         "imagePullPolicy" (.Values.auxiliaryServices.playground.image.pullPolicy | default "IfNotPresent")

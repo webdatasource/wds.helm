@@ -40,7 +40,7 @@
     "containers" (list
       (dict
         "name" $name
-        "registry" .Values.global.registry
+        "registry" .Values.global.imageRegistry
         "image" (.Values.coreServices.jober.image.name | default "webdatasource/jober")
         "tag" (.Values.coreServices.jober.image.tag | default .Chart.AppVersion)
         "imagePullPolicy" (.Values.coreServices.jober.image.pullPolicy | default "IfNotPresent")

@@ -11,7 +11,7 @@
       "containers" (list
         (dict
           "name" "docs"
-          "registry" .Values.global.registry
+          "registry" .Values.global.imageRegistry
           "image" (.Values.auxiliaryServices.docs.image.name | default "webdatasource/docs")
           "tag" (.Values.auxiliaryServices.docs.image.tag | default .Values.global.auxiliaryServices.docs.defaultTag)
           "imagePullPolicy" (.Values.auxiliaryServices.docs.image.pullPolicy | default "Always")

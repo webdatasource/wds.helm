@@ -37,7 +37,7 @@
     "containers" (list
       (dict
         "name" "idealer"
-        "registry" .Values.global.registry
+        "registry" .Values.global.imageRegistry
         "image" (.Values.coreServices.idealer.image.name | default "webdatasource/idealer")
         "tag" (.Values.coreServices.idealer.image.tag | default .Chart.AppVersion)
         "imagePullPolicy" (.Values.coreServices.idealer.image.pullPolicy | default "IfNotPresent")

@@ -72,7 +72,7 @@
     "containers" (list
       (dict
         "name" "solidstack"
-        "registry" .Values.global.registry
+        "registry" .Values.global.imageRegistry
         "image" (.Values.coreServices.solidstack.image.name | default "webdatasource/solidstack")
         "tag" (.Values.coreServices.solidstack.image.tag | default .Chart.AppVersion)
         "imagePullPolicy" (.Values.coreServices.solidstack.image.pullPolicy | default "IfNotPresent")

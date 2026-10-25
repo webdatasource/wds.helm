@@ -48,7 +48,7 @@
     "containers" (list
       (dict
         "name" "datakeeper"
-        "registry" .Values.global.registry
+        "registry" .Values.global.imageRegistry
         "image" (.Values.coreServices.datakeeper.image.name | default "webdatasource/datakeeper")
         "tag" (.Values.coreServices.datakeeper.image.tag | default .Chart.AppVersion)
         "imagePullPolicy" (.Values.coreServices.datakeeper.image.pullPolicy | default "IfNotPresent")

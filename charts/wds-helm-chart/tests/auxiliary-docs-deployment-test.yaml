@@ -67,9 +67,9 @@ tests:
           path: spec.replicas
           value: 3
 
-  - it: should render image without registry when global.registry empty
+  - it: should render image without registry when global.imageRegistry empty
     set:
-      global.registry: ""
+      global.imageRegistry: ""
     asserts:
     - matchRegex:
         path: spec.template.spec.containers[0].image
@@ -77,7 +77,7 @@ tests:
 
   - it: should render image with overrides (registry, name, tag, pullPolicy)
     set:
-      global.registry: custom.registry
+      global.imageRegistry: custom.registry
       auxiliaryServices.docs.image.name: org/custom-docs
       auxiliaryServices.docs.image.tag: v9
       auxiliaryServices.docs.image.pullPolicy: Always
@@ -241,3 +241,48 @@ tests:
       - matchRegex:
           path: spec.template.spec.containers[0].image
           pattern: ^docker\.io/webdatasource/docs:v\d+\.\d+$
+
+  - it: should use global.imageRegistry with default image settings
+    set:
+      global.imageRegistry: mirror.example:5000
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^mirror\.example:5000/webdatasource/docs:v\d+\.\d+$
+
+  - it: should use global.imageRegistry with image overrides and FIPS
+    set:
+      global.imageRegistry: mirror.example:5000
+      global.coreServices.compliance.fips: true
+      auxiliaryServices.docs.image.name: org/custom-docs
+      auxiliaryServices.docs.image.tag: v9
+      auxiliaryServices.docs.image.pullPolicy: Never
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: mirror.example:5000/org/custom-docs:v9
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Never
+
+  - it: should use global.imageRegistry with image overrides
+    set:
+      global.imageRegistry: mirror.example:5000
+      auxiliaryServices.docs.image.name: org/custom-docs
+      auxiliaryServices.docs.image.tag: v9
+      auxiliaryServices.docs.image.pullPolicy: Never
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: mirror.example:5000/org/custom-docs:v9
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Never
+
+  - it: should omit the registry prefix when global.imageRegistry is unset
+    set:
+      global.imageRegistry: null
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^webdatasource/docs:v\d+\.\d+$
